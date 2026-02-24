@@ -1,0 +1,15 @@
+# Champions Online Combat Log Analyzer Configuration
+# Database connection settings
+db.host=localhost
+db.port=3306
+db.name=cocla
+db.user=cocla
+db.password=cocla
+db.useSSL=false
+db.allowPublicKeyRetrieval=true
+
+# Log directory (Champions Online default location)
+log.directory=C:/Program Files (x86)/Steam/steamapps/common/Champions Online/Champions Online/Live/logs/Client/
+
+# Watch interval in milliseconds (how often to check for new log data)
+watch.interval=5000
