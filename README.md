@@ -2,14 +2,13 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/Java-15-blue.svg)](https://adoptium.net/)
-[![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver&cacheSeconds=0)](https://github.com/micezipper/cocla/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/micezipper/cocla/total)](https://github.com/micezipper/cocla/releases)
 
-**Development Branch**
-[![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml/badge.svg?branch=release/1.0-rc2)](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml)
-
-**Release**
-[![Release](https://github.com/micezipper/cocla/actions/workflows/maven.yml/badge.svg)](https://github.com/micezipper/cocla/actions/workflows/maven.yml)
+| | Branch | Status | Description |
+|---|--------|--------|-------------|
+| ✅ | **Current stable** (`release/1.0-rc1`) | [![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver&cacheSeconds=0)](https://github.com/micezipper/cocla/releases) | Released |
+| 🚧 | **Development** (`release/1.0-rc2`) | [![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml/badge.svg?branch=release/1.0-rc2)](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml) | Active development, bug fixes |
+| 🏷️ | **Release** (`main`) | [![Release](https://github.com/micezipper/cocla/actions/workflows/maven.yml/badge.svg)](https://github.com/micezipper/cocla/actions/workflows/maven.yml) | Stable releases |
 
 Headless Java application for forwarding Champions Online combat logs to MySQL database for Grafana visualization.
 
@@ -25,16 +24,6 @@ Headless Java application for forwarding Champions Online combat logs to MySQL d
 - 🔧 **Simple configuration** - Single config.properties file
 - 🎯 **Impact type tracking** - Critical, Kill, Dodge, Immune and more
 - 👥 **Entity classification** - Automatically distinguishes Players from Creatures
-
-## 🚦 Current Status
-
-| Version | Status | Description |
-|---------|--------|-------------|
-| v1.0 RC1| ✅ Stable | Initial release |
-| v1.0 RC2 | 🚧 In Development | Bug fixes and testing |
-| v1.0 | 📅 Planned | Full core functionality |
-| v1.1 | 📅 Planned | Performance improvements |
-| v1.2 | 📅 Planned | Installers and Docker |
 
 ## 📋 Prerequisites
 
