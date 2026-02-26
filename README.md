@@ -6,7 +6,7 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/micezipper/cocla/total)](https://github.com/micezipper/cocla/releases)
 
 **Development Branch**
-[![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml/badge.svg?branch=rc2)](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml)
+[![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml/badge.svg?branch=release/1.0-rc2)](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml)
 
 **Release**
 [![Release](https://github.com/micezipper/cocla/actions/workflows/maven.yml/badge.svg)](https://github.com/micezipper/cocla/actions/workflows/maven.yml)
