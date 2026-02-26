@@ -6,7 +6,7 @@
 
 | | Branch | Status | Description |
 |---|--------|--------|-------------|
-| ✅ | **Current stable** (`release/1.0-rc1`) | [![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver&cacheSeconds=0)](https://github.com/micezipper/cocla/releases) | Released |
+| ✅ | **Current build** (`release/1.0-rc1`) | [![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver&cacheSeconds=0)](https://github.com/micezipper/cocla/releases) | Released |
 | 🚧 | **Development** (`release/1.0-rc2`) | [![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml/badge.svg?branch=release/1.0-rc2)](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml) | Active development, bug fixes |
 | 🏷️ | **Release** (`main`) | [![Release](https://github.com/micezipper/cocla/actions/workflows/maven.yml/badge.svg)](https://github.com/micezipper/cocla/actions/workflows/maven.yml) | Stable releases |
 
