@@ -5,9 +5,9 @@ name: Build COCLA RC2
 
 on:
   push:
-    branches: [ "rc2" ]  # изменено с main на rc2
+    branches: [ "release/1.0-rc2" ]  # изменено с main на rc2
   pull_request:
-    branches: [ "rc2" ]  # изменено с main на rc2
+    branches: [ "release/1.0-rc2" ]  # изменено с main на rc2
   workflow_dispatch:
 
 jobs:
