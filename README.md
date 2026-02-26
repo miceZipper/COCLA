@@ -34,6 +34,9 @@ Headless Java application for forwarding Champions Online combat logs to MySQL d
 | 📊 **Grafana** | 12.2.1+ | ✅ Yes | Visualization dashboards |
 | 🎮 **Champions Online** | any | ✅ Yes | Game with combat logging enabled |
 
+## 🚀 Quick Start
+Coming soon in v1.2
+
 ## 🛠️ Manual installation Guide
 
 ### 1. Database Setup
