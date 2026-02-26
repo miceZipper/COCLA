@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/Java-15-blue.svg)](https://adoptium.net/)
-[![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver)](https://github.com/micezipper/cocla/releases)
+[![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver&cacheSeconds=0)](https://github.com/micezipper/cocla/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/micezipper/cocla/total)](https://github.com/micezipper/cocla/releases)
 
 **Development Branch**
