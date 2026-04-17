@@ -10,7 +10,7 @@
 | 🏷️ | **Release** (`main`) | [![Release](https://github.com/micezipper/cocla/actions/workflows/maven.yml/badge.svg)](https://github.com/micezipper/cocla/actions/workflows/maven.yml) | Stable releases |
 
 Headless Java application for forwarding Champions Online combat logs to MySQL database for Grafana visualization.
-
+![Dashboard Preview](https://github.com/miceZipper/COCLA/blob/release/1.0-rc1/screen-cocla1.png?raw=true)
 ## ✨ Features
 
 - 📊 **Real-time combat log monitoring** - Automatically detects and parses new log entries
