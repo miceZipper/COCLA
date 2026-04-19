@@ -73,6 +73,7 @@ nano config.properties  # or any text editor
    - Database: ``cocla``
    - User: ``cocla``
    - Password: ``cocla``
+   - Session timezone: ``+00:00`` (required to display time correctly)
 3. Import the dashboard:
    1. Click + → **Import**
    2. Upload ``config/grafana/dashboard.json``
