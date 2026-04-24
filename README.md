@@ -42,10 +42,7 @@ Coming soon in v1.2
 ### 1. Database Setup
 ```bash
 # Create database and users
-mysql -u root -p < config/mariadb/users.sql
-
-# Create COCLA tables
-mysql -u root -p cocla < config/cocla/schema.sql
+mysql -u root -p < config/mariadb/schema.sql
 ```
 
 ### 2. Build the Application
