@@ -11,20 +11,10 @@ import java.util.regex.Pattern;
 
 public class LogParser {
 
-    private static DatabaseManager dbManager; // Добавляем статическое поле
-
     // Паттерн для разбора строки лога
     private static final Pattern LOG_PATTERN = Pattern.compile(
             "^(.+?)::(.+)$"
     );
-
-    // Метод для установки DatabaseManager
-    public static void setDatabaseManager(DatabaseManager manager) {
-        if (manager == null) {
-            throw new IllegalArgumentException("DatabaseManager cannot be null");
-        }
-        dbManager = manager;
-    }
 
     public static CombatLogEntry parseLine(String line, String fileName) {
         CombatLogEntry entry = new CombatLogEntry();
@@ -83,10 +73,6 @@ public class LogParser {
         }
     }
 
-    private static void saveEntityType(String entityId, String entityName, String entityType) {
-        dbManager.saveEntityType(entityId, entityName, entityType);
-    }
-
     private static void parseSource(CombatLogEntry entry, String name, String idPart) {
         entry.setSourceName(emptyToNull(name));
 
@@ -101,7 +87,7 @@ public class LogParser {
 
             // СОХРАНЯЕМ ИГРОКА
             if (entry.getSourceName() != null && entry.getSourceId() != null) {
-                saveEntityType(entry.getSourceId(), entry.getSourceName(), "Player");
+                DatabaseManager.saveEntityType(entry.getSourceId(), entry.getSourceName(), "Player");
             }
 
             if (parts.length > 1) {
@@ -120,7 +106,7 @@ public class LogParser {
 
             // СОХРАНЯЕМ МОБА/ОБЪЕКТ
             if (entry.getSourceName() != null && entry.getSourceId() != null) {
-                saveEntityType(entry.getSourceId(), entry.getSourceName(), "Creature");
+                DatabaseManager.saveEntityType(entry.getSourceId(), entry.getSourceName(), "Creature");
             }
         }
     }
@@ -139,7 +125,7 @@ public class LogParser {
 
             // СОХРАНЯЕМ ПРИЗЫВАТЕЛЯ
             if (entry.getSummonName() != null && entry.getSummonId() != null) {
-                saveEntityType(entry.getSummonId(), entry.getSummonName(), "Player");
+                DatabaseManager.saveEntityType(entry.getSummonId(), entry.getSummonName(), "Player");
             }
 
         } else {
@@ -162,7 +148,7 @@ public class LogParser {
 
             // СОХРАНЯЕМ ИГРОКА (жертву)
             if (entry.getVictimName() != null && !entry.getVictimName().equals("SELF") && entry.getVictimId() != null) {
-                saveEntityType(entry.getVictimId(), entry.getVictimName(), "Player");
+                DatabaseManager.saveEntityType(entry.getVictimId(), entry.getVictimName(), "Player");
             }
 
         } else if (idPart.startsWith("C[")) {
@@ -172,7 +158,7 @@ public class LogParser {
 
             // СОХРАНЯЕМ МОБА/ОБЪЕКТ (жертву)
             if (entry.getVictimName() != null && !entry.getVictimName().equals("SELF") && entry.getVictimId() != null) {
-                saveEntityType(entry.getVictimId(), entry.getVictimName(), "Creature");
+                DatabaseManager.saveEntityType(entry.getVictimId(), entry.getVictimName(), "Creature");
             }
 
         } else {
