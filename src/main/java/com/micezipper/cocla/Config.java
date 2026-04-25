@@ -8,21 +8,13 @@ import java.util.Properties;
 
 public class Config {
 
-    private String dbHost, dbPort, dbName, dbUser, dbPassword, logDirectory;
-    private int watchInterval;
-    private boolean useSSL, allowPublicKeyRetrieval;
+    public static String dbHost, dbPort, dbName, dbUser, dbPassword, logDirectory, jdbcUrl;
+    public static int watchInterval;
+    public static boolean useSSL, allowPublicKeyRetrieval;
 
-    private static final String DEFAULT_CONFIG_PATH = "config" + File.separator + "cocla" + File.separator + "config.properties";
+    public static final String DEFAULT_CONFIG_PATH = "config" + File.separator + "cocla" + File.separator + "config.properties";
 
-    public Config() {
-        loadFromFile(DEFAULT_CONFIG_PATH);
-    }
-
-    public Config(String configPath) {
-        loadFromFile(configPath);
-    }
-
-    public Config(String[] args) {
+    public static void init(String[] args) {
         // Сначала загружаем из файла по умолчанию
         loadFromFile(DEFAULT_CONFIG_PATH);
 
@@ -66,18 +58,24 @@ public class Config {
                 }
             }
         }
+        rebuildJdbcUrl();
     }
 
-    private void loadFromFile(String path) {
-        Properties props = new Properties();
+    private static void loadFromFile(String path) {
         File configFile = new File(path);
-
         if (!configFile.exists()) {
-            System.err.println("Config file not found: " + path + ", using defaults");
-            setDefaults();
-        } else try (InputStream input = new FileInputStream(configFile)) {
-            props.load(input);
+            System.out.println("Configuration file is not found or not specified. Creating the default one");
+            configFile = new File(DEFAULT_CONFIG_PATH);
+            try {
+                configFile.createNewFile();
+            } catch (IOException ex) {
+                System.getLogger(Config.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+        }
 
+        try (InputStream input = new FileInputStream(configFile)) {
+            Properties props = new Properties();
+            props.load(input);
             dbHost = props.getProperty("db.host", "localhost");
             dbPort = props.getProperty("db.port", "3306");
             dbName = props.getProperty("db.name", "cocla");
@@ -87,64 +85,15 @@ public class Config {
             watchInterval = Integer.parseInt(props.getProperty("watch.interval", "5000"));
             useSSL = Boolean.parseBoolean(props.getProperty("db.useSSL", "false"));
             allowPublicKeyRetrieval = Boolean.parseBoolean(props.getProperty("db.allowPublicKeyRetrieval", "true"));
-
-        } catch (IOException e) {
-            System.err.println("Error loading config: " + e.getMessage());
-            setDefaults();
+        } catch (IOException ex) {
+            System.out.println("Error: " + ex.getMessage());
         }
+
+        rebuildJdbcUrl();
     }
 
-    private void setDefaults() {
-        dbHost = "db.server.mzp";
-        dbPort = "3306";
-        dbName = "cocla";
-        dbUser = "root";
-        dbPassword = "";
-        logDirectory = "C:/Program Files (x86)/Steam/steamapps/common/Champions Online/Champions Online/Live/logs/Client/";
-        watchInterval = 5000;
-        useSSL = false;
-        allowPublicKeyRetrieval = true;
-    }
-
-    public String getJdbcUrl() {
-        return String.format("jdbc:mysql://%s:%s/%s?useSSL=%s&allowPublicKeyRetrieval=%s&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&zeroDateTimeBehavior=CONVERT_TO_NULL&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false",
+    private static void rebuildJdbcUrl() {
+        jdbcUrl = String.format("jdbc:mysql://%s:%s/%s?useSSL=%s&allowPublicKeyRetrieval=%s&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&zeroDateTimeBehavior=CONVERT_TO_NULL&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false",
                 dbHost, dbPort, dbName, useSSL, allowPublicKeyRetrieval);
-    }
-
-    // Геттеры
-    public String getDbHost() {
-        return dbHost;
-    }
-
-    public String getDbPort() {
-        return dbPort;
-    }
-
-    public String getDbName() {
-        return dbName;
-    }
-
-    public String getDbUser() {
-        return dbUser;
-    }
-
-    public String getDbPassword() {
-        return dbPassword;
-    }
-
-    public String getLogDirectory() {
-        return logDirectory;
-    }
-
-    public int getWatchInterval() {
-        return watchInterval;
-    }
-
-    public boolean isUseSSL() {
-        return useSSL;
-    }
-
-    public boolean isAllowPublicKeyRetrieval() {
-        return allowPublicKeyRetrieval;
     }
 }

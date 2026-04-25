@@ -2,42 +2,31 @@ package com.micezipper.cocla;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         System.out.println("Champions Online Combat Log Analyzer - Headless Data Forwarder\nVersion 1.0\n");
 
-        // Загружаем конфигурацию
-        Config config = new Config(args);
+        //load config and app
+        Config.init(args);
+        DatabaseManager.init();
+        LogWatcher.init();
+        
+        // print config
+        System.out.println("Configuration:\n  DB Host: " + Config.dbHost
+                + "\n  DB Name: " + Config.dbName
+                + "\n  Log Directory: " + Config.logDirectory
+                + "\n  Watch Interval: " + Config.watchInterval + "ms");
 
-        // Показываем конфигурацию
-        System.out.println("Configuration:\n  DB Host: " + config.getDbHost()
-                + "\n  DB Name: " + config.getDbName()
-                + "\n  Log Directory: " + config.getLogDirectory()
-                + "\n  Watch Interval: " + config.getWatchInterval() + "ms");
+        // add shutdown hook for the correct exit
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down...");
+            DatabaseManager.shutdown();
+            LogWatcher.shutdown();
+        }));
 
-        // Запускаем приложение
-        try (DatabaseManager dbManager = new DatabaseManager(config); LogWatcher watcher = new LogWatcher(config, dbManager)) {
+        System.out.println("COCLA is running. Press Ctrl+C to stop.");
 
-            // Устанавливаем DatabaseManager в LogParser
-            LogParser.setDatabaseManager(dbManager);
-
-            watcher.start();
-
-            // Добавляем shutdown hook для корректного завершения
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("Shutting down...");
-            }));
-
-            System.out.println("COCLA is running. Press Ctrl+C to stop.");
-
-            // Бесконечный цикл
-            Thread.currentThread().join();
-
-        } catch (InterruptedException e) {
-            System.out.println("Interrupted, shutting down...");
-        } catch (Exception e) {
-            System.err.println("Fatal error: " + e.getMessage());
-            System.exit(1);
-        }
+        // loop
+        Thread.currentThread().join();
     }
 
 }
