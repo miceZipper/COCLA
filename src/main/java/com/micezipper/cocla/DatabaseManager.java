@@ -150,13 +150,11 @@ public class DatabaseManager {
         }
 
         String mainSql = """
-            INSERT IGNORE INTO combat_logs (
-                log_timestamp, source_name, source_id, source_owner,
-                summoner_name, summoner_id, victim_name, victim_id,
-                power_name, power_id, attack_type,
-                actual_impact, pure_impact, raw_line, line_hash, file_name
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
+        INSERT IGNORE INTO combat_logs (
+            log_timestamp, source_id, summoner_id, victim_id, power_id,
+            actual_impact, pure_impact, raw_line, line_hash, file_name
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
 
         List<List<CombatLogEntry>> batches = partition(entries, BATCH_SIZE);
         int batchInserted = 0;
@@ -168,30 +166,41 @@ public class DatabaseManager {
                 for (CombatLogEntry entry : batch) {
                     String lineHash = calculateHash(entry.getRawLine());
 
-                    // Все поля могут быть NULL, поэтому используем setObject
                     pstmt.setTimestamp(1, Timestamp.valueOf(entry.getTimestamp()));
-                    pstmt.setString(2, entry.getSourceName());  // может быть null
-                    pstmt.setString(3, entry.getSourceId());    // может быть null
-                    pstmt.setString(4, entry.getSourceOwner()); // может быть null
-                    pstmt.setString(5, entry.getSummonName());// может быть null
-                    pstmt.setString(6, entry.getSummonId());  // может быть null
-                    pstmt.setString(7, entry.getVictimName());  // всегда "SELF" или имя
-                    pstmt.setString(8, entry.getVictimId());    // всегда "SELF" или ID
-                    pstmt.setString(9, entry.getPowerName());   // может быть null
-                    pstmt.setString(10, entry.getPowerId());    // может быть null
-                    pstmt.setString(11, entry.getAttackType()); // может быть null
-                    pstmt.setDouble(12, entry.getActualImpact());
-                    pstmt.setDouble(13, entry.getPureImpact());
-                    pstmt.setString(14, entry.getRawLine());
-                    pstmt.setString(15, lineHash);
-                    pstmt.setString(16, entry.getFileName());
+
+                    // FK-поля (могут быть null)
+                    if (entry.getSourceEntityId() != null) {
+                        pstmt.setLong(2, entry.getSourceEntityId());
+                    } else {
+                        pstmt.setNull(2, java.sql.Types.BIGINT);
+                    }
+                    if (entry.getSummonerEntityId() != null) {
+                        pstmt.setLong(3, entry.getSummonerEntityId());
+                    } else {
+                        pstmt.setNull(3, java.sql.Types.BIGINT);
+                    }
+                    if (entry.getVictimEntityId() != null) {
+                        pstmt.setLong(4, entry.getVictimEntityId());
+                    } else {
+                        pstmt.setNull(4, java.sql.Types.BIGINT);
+                    }
+                    if (entry.getPowerId() != null) {
+                        pstmt.setLong(5, entry.getPowerId());
+                    } else {
+                        pstmt.setNull(5, java.sql.Types.BIGINT);
+                    }
+
+                    pstmt.setDouble(6, entry.getActualImpact());
+                    pstmt.setDouble(7, entry.getPureImpact());
+                    pstmt.setString(8, entry.getRawLine());
+                    pstmt.setString(9, lineHash);
+                    pstmt.setString(10, entry.getFileName());
 
                     pstmt.addBatch();
                 }
 
                 int[] results = pstmt.executeBatch();
 
-                // Получаем сгенерированные ID
                 ResultSet generatedKeys = pstmt.getGeneratedKeys();
                 List<CombatLogEntry> successfullyInserted = new ArrayList<>();
 
@@ -202,17 +211,14 @@ public class DatabaseManager {
                     }
                 }
 
-                // Сохраняем impact types только для успешно вставленных записей
                 if (!successfullyInserted.isEmpty()) {
                     saveImpactTypes(conn, successfullyInserted);
                 }
 
-                // Подсчитываем результаты
                 for (int result : results) {
                     if (result == 1 || result == Statement.SUCCESS_NO_INFO) {
                         batchInserted++;
                     } else if (result == 0) {
-                        // Дубликат
                         totalSkipped++;
                     }
                 }
@@ -221,7 +227,6 @@ public class DatabaseManager {
                 System.err.println("Batch error: " + e.getMessage());
                 batchErrors++;
 
-                // Если batch упал, пробуем по одному
                 int individuallySaved = saveIndividually(batch);
                 batchInserted += individuallySaved;
                 batchErrors += (batch.size() - individuallySaved);
@@ -236,31 +241,6 @@ public class DatabaseManager {
                     + ", Skipped: " + totalSkipped
                     + ", Errors: " + batchErrors
                     + " (Total: " + totalInserted + " inserted)");
-        }
-    }
-
-    public static void saveEntityType(String entityId, String entityName, String entityType) {
-        if (entityId == null || entityId.isEmpty() || entityName == null || entityName.isEmpty()) {
-            return;
-        }
-
-        String sql = """
-        INSERT INTO entity_types (entity_id, entity_name, entity_type)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            entity_name = VALUES(entity_name),
-            entity_type = VALUES(entity_type)
-        """;
-
-        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, entityId);
-            pstmt.setString(2, entityName);
-            pstmt.setString(3, entityType);
-            pstmt.executeUpdate();
-
-        } catch (SQLException e) {
-            System.err.println("Failed to save entity type: " + e.getMessage());
         }
     }
 
@@ -288,13 +268,11 @@ public class DatabaseManager {
 
     private static int saveIndividually(List<CombatLogEntry> entries) {
         String mainSql = """
-            INSERT IGNORE INTO combat_logs (
-                log_timestamp, source_name, source_id, source_owner,
-                summoner_name, summoner_id, victim_name, victim_id,
-                power_name, power_id, attack_type,
-                actual_impact, pure_impact, raw_line, line_hash, file_name
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
+        INSERT IGNORE INTO combat_logs (
+            log_timestamp, source_id, summoner_id, victim_id, power_id,
+            actual_impact, pure_impact, raw_line, line_hash, file_name
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
 
         int saved = 0;
 
@@ -305,21 +283,33 @@ public class DatabaseManager {
                     String lineHash = calculateHash(entry.getRawLine());
 
                     pstmt.setTimestamp(1, Timestamp.valueOf(entry.getTimestamp()));
-                    pstmt.setString(2, entry.getSourceName());
-                    pstmt.setString(3, entry.getSourceId());
-                    pstmt.setString(4, entry.getSourceOwner());
-                    pstmt.setString(5, entry.getSummonName());
-                    pstmt.setString(6, entry.getSummonId());
-                    pstmt.setString(7, entry.getVictimName());
-                    pstmt.setString(8, entry.getVictimId());
-                    pstmt.setString(9, entry.getPowerName());
-                    pstmt.setString(10, entry.getPowerId());
-                    pstmt.setString(11, entry.getAttackType());
-                    pstmt.setDouble(12, entry.getActualImpact());
-                    pstmt.setDouble(13, entry.getPureImpact());
-                    pstmt.setString(14, entry.getRawLine());
-                    pstmt.setString(15, lineHash);
-                    pstmt.setString(16, entry.getFileName());
+
+                    if (entry.getSourceEntityId() != null) {
+                        pstmt.setLong(2, entry.getSourceEntityId());
+                    } else {
+                        pstmt.setNull(2, java.sql.Types.BIGINT);
+                    }
+                    if (entry.getSummonerEntityId() != null) {
+                        pstmt.setLong(3, entry.getSummonerEntityId());
+                    } else {
+                        pstmt.setNull(3, java.sql.Types.BIGINT);
+                    }
+                    if (entry.getVictimEntityId() != null) {
+                        pstmt.setLong(4, entry.getVictimEntityId());
+                    } else {
+                        pstmt.setNull(4, java.sql.Types.BIGINT);
+                    }
+                    if (entry.getPowerId() != null) {
+                        pstmt.setLong(5, entry.getPowerId());
+                    } else {
+                        pstmt.setNull(5, java.sql.Types.BIGINT);
+                    }
+
+                    pstmt.setDouble(6, entry.getActualImpact());
+                    pstmt.setDouble(7, entry.getPureImpact());
+                    pstmt.setString(8, entry.getRawLine());
+                    pstmt.setString(9, lineHash);
+                    pstmt.setString(10, entry.getFileName());
 
                     int result = pstmt.executeUpdate();
                     if (result > 0) {
@@ -328,7 +318,6 @@ public class DatabaseManager {
                             entry.setDbId(generatedKeys.getLong(1));
                         }
 
-                        // Сохраняем impact types
                         for (String impactType : entry.getImpactTypes()) {
                             int typeId = getOrCreateImpactType(impactType);
                             if (typeId != -1) {
@@ -340,7 +329,6 @@ public class DatabaseManager {
                                 }
                             }
                         }
-
                         saved++;
                     } else {
                         totalSkipped++;
@@ -348,7 +336,6 @@ public class DatabaseManager {
 
                 } catch (SQLException e) {
                     System.err.println("Error saving individual entry: " + e.getMessage());
-                    System.err.println("Problematic line: " + entry.getRawLine().substring(0, Math.min(100, entry.getRawLine().length())) + "...");
                     totalErrors++;
                 }
             }
@@ -370,6 +357,127 @@ public class DatabaseManager {
             partitions.add(list.subList(i, Math.min(i + size, list.size())));
         }
         return partitions;
+    }
+
+    /**
+     * Получает или создаёт запись в таблице entities. Environment (source
+     * отсутствует) — возвращает 0.
+     */
+    public static Long getOrCreateEntity(String entityId, String entityName, String entityHandle, String entityType) {
+        if (entityId == null || entityId.isEmpty() || entityId.equals("*")) {
+            return 0L;
+        }
+
+        String selectSql = "SELECT id, entity_name FROM entities WHERE entity_id = ?";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
+            pstmt.setString(1, entityId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Long id = rs.getLong("id");
+                String existingName = rs.getString("entity_name");
+
+                // Если в БД имя NULL, а у нас есть нормальное имя — обновляем
+                if ((existingName == null || existingName.isEmpty()) && entityName != null && !entityName.isEmpty()) {
+                    updateEntityName(conn, id, entityName, entityHandle);
+                }
+                return id;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error finding entity: " + e.getMessage());
+        }
+
+        String insertSql = "INSERT INTO entities (entity_id, entity_name, entity_handle, entity_type) VALUES (?, ?, ?, ?)";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            pstmt.setString(1, entityId);
+            pstmt.setString(2, entityName);
+            pstmt.setString(3, entityHandle);
+            pstmt.setString(4, entityType);
+            pstmt.executeUpdate();
+
+            ResultSet rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error creating entity: " + e.getMessage());
+        }
+
+        return 0L;
+    }
+
+    private static void updateEntityName(Connection conn, Long id, String newName, String newHandle) {
+        String sql = "UPDATE entities SET entity_name = ?, entity_handle = COALESCE(entity_handle, ?) WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newName);
+            pstmt.setString(2, newHandle);
+            pstmt.setLong(3, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating entity name: " + e.getMessage());
+        }
+    }
+
+    private static void updateEntityIfChanged(Connection conn, Long id, String newName, String newHandle) {
+        // Можно добавить логику обновления имени/хэндла если они изменились
+        // Пока оставляем заглушку — имена редко меняются
+    }
+
+    /**
+     * Получает или создаёт запись в таблице powers. powerId всегда должен быть
+     * (иначе возвращаем null).
+     */
+    public static Long getOrCreatePower(String powerId, String powerName, String attackType) {
+        if (powerId == null || powerId.isEmpty()) {
+            return null;
+        }
+
+        // Пытаемся найти по power_id
+        String selectSql = "SELECT id, power_name, attack_type FROM powers WHERE power_id = ?";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
+            pstmt.setString(1, powerId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Long id = rs.getLong("id");
+                String existingName = rs.getString("power_name");
+                // Если имя было NULL, а теперь появилось — обновляем
+                if ((existingName == null || existingName.isEmpty()) && powerName != null && !powerName.isEmpty()) {
+                    updatePowerName(conn, id, powerName, attackType);
+                }
+                return id;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error finding power: " + e.getMessage());
+        }
+
+        // Создаём новую запись
+        String insertSql = "INSERT INTO powers (power_id, power_name, attack_type) VALUES (?, ?, ?)";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            pstmt.setString(1, powerId);
+            pstmt.setString(2, powerName);
+            pstmt.setString(3, attackType);
+            pstmt.executeUpdate();
+
+            ResultSet rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error creating power: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    private static void updatePowerName(Connection conn, Long id, String newName, String attackType) {
+        String sql = "UPDATE powers SET power_name = ?, attack_type = COALESCE(attack_type, ?) WHERE id = ? AND power_name IS NULL";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newName);
+            pstmt.setString(2, attackType);
+            pstmt.setLong(3, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating power name: " + e.getMessage());
+        }
     }
 
     public static void printStats() {

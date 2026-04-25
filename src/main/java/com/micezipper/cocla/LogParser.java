@@ -28,11 +28,9 @@ public class LogParser {
                 return null;
             }
 
-            // Парсим timestamp
             String timestampStr = m.group(1);
             entry.setTimestamp(parseTimestamp(timestampStr));
 
-            // Разбираем остальные поля
             String rest = m.group(2);
             String[] fields = rest.split(",", -1);
 
@@ -41,27 +39,47 @@ public class LogParser {
                 return null;
             }
 
-            // Source
-            parseSource(entry, getSafe(fields, 0), getSafe(fields, 1));
-
+            // Source — получаем entity_id
+            var idPartSource = getSafe(fields, 1);
+            if (idPartSource == null || idPartSource.isEmpty() || idPartSource.equals("*")) {
+                // Нет ID — это Environment (лава, падение)
+                entry.setSourceEntityId(DatabaseManager.getOrCreateEntity(
+                        "0", "Environment", null, "Environment"));
+            } else {
+                String[] sourceInfo = parseEntityInfo(getSafe(fields, 0), getSafe(fields, 1));
+                entry.setSourceEntityId(DatabaseManager.getOrCreateEntity(
+                        sourceInfo[0], sourceInfo[1], sourceInfo[2], sourceInfo[3]));
+            }
             // Summoner
-            parseSummon(entry, getSafe(fields, 2), getSafe(fields, 3));
+            String[] summonInfo = parseEntityInfo(getSafe(fields, 2), getSafe(fields, 3));
+            if (summonInfo[0] != null && !summonInfo[0].equals("*") && !summonInfo[0].isEmpty()) {
+                entry.setSummonerEntityId(DatabaseManager.getOrCreateEntity(
+                        summonInfo[0], summonInfo[1], summonInfo[2], summonInfo[3]));
+            }
 
-            // Victim
-            parseVictim(entry, getSafe(fields, 4), getSafe(fields, 5));
+            // Victim — если victim пустой, используем source (self-targeting)
+            String[] victimInfo = parseEntityInfo(getSafe(fields, 4), getSafe(fields, 5));
+
+            // Если victim не указан явно — это self-targeting, копируем source
+            if (victimInfo[0] == null || victimInfo[0].isEmpty() || victimInfo[0].equals("*")) {
+                entry.setVictimEntityId(entry.getSourceEntityId());
+            } else {
+                entry.setVictimEntityId(DatabaseManager.getOrCreateEntity(
+                        victimInfo[0], victimInfo[1], victimInfo[2], victimInfo[3]));
+            }
 
             // Power
-            entry.setPowerName(emptyToNull(getSafe(fields, 6)));
-            entry.setPowerId(emptyToNull(getSafe(fields, 7)));
+            String powerName = emptyToNull(getSafe(fields, 6));
+            String powerIdStr = emptyToNull(getSafe(fields, 7));
+            String attackType = emptyToNull(getSafe(fields, 8));
 
-            // Attack type
-            entry.setAttackType(emptyToNull(getSafe(fields, 8)));
+            entry.setPowerId(DatabaseManager.getOrCreatePower(powerIdStr, powerName, attackType));
 
-            // Impact type (может содержать |)
+            // Impact types
             String impactTypeStr = getSafe(fields, 9);
             entry.addImpactType(impactTypeStr);
 
-            // Impact значения
+            // Values
             entry.setActualImpact(parseDouble(getSafe(fields, 10)));
             entry.setPureImpact(parseDouble(getSafe(fields, 11)));
 
@@ -73,97 +91,47 @@ public class LogParser {
         }
     }
 
-    private static void parseSource(CombatLogEntry entry, String name, String idPart) {
-        entry.setSourceName(emptyToNull(name));
-
-        if (idPart == null || idPart.isEmpty() || idPart.equals("*")) {
-            return;
+    private static String normalizeEntityName(String name) {
+        if (name == null || name.isEmpty() || name.equals("*")) {
+            return null;
         }
+        // Если имя выглядит как технический ID — это баг игры, игнорируем его
+        if (name.startsWith("C[") || name.startsWith("P[")) {
+            return null;
+        }
+        return name;
+    }
+
+    /**
+     * Разбирает entity из name и idPart. Возвращает массив: [entityId,
+     * entityName, entityHandle, entityType]
+     */
+    private static String[] parseEntityInfo(String name, String idPart) {
+        String entityId;
+        String entityName = normalizeEntityName(name);
+        String entityHandle = null;
+        String entityType;
 
         if (idPart.startsWith("P[")) {
+            entityType = "Player";
             String inner = idPart.substring(2, idPart.length() - 1);
             String[] parts = inner.split("@", 2);
-            entry.setSourceId(parts[0]);
-
-            // СОХРАНЯЕМ ИГРОКА
-            if (entry.getSourceName() != null && entry.getSourceId() != null) {
-                DatabaseManager.saveEntityType(entry.getSourceId(), entry.getSourceName(), "Player");
-            }
-
+            entityId = parts[0];
             if (parts.length > 1) {
                 String[] ownerParts = parts[1].split(" ", 2);
-                if (ownerParts.length > 1) {
-                    entry.setSourceOwner(ownerParts[1]);
-                } else {
-                    entry.setSourceOwner(ownerParts[0]);
-                }
+                entityHandle = ownerParts[0];
             }
         } else if (idPart.startsWith("C[")) {
+            entityType = "Creature";
             String inner = idPart.substring(2, idPart.length() - 1);
             String[] parts = inner.split(" ", 2);
-            entry.setSourceId(parts[0]);
-            entry.setSourceOwner(parts.length > 1 ? parts[1] : null);
-
-            // СОХРАНЯЕМ МОБА/ОБЪЕКТ
-            if (entry.getSourceName() != null && entry.getSourceId() != null) {
-                DatabaseManager.saveEntityType(entry.getSourceId(), entry.getSourceName(), "Creature");
-            }
-        }
-    }
-
-    private static void parseSummon(CombatLogEntry entry, String name, String idPart) {
-        entry.setSummonName(emptyToNull(name));
-
-        if (idPart == null || idPart.isEmpty() || idPart.equals("*")) {
-            return;
-        }
-
-        if (idPart.startsWith("P[")) {
-            String inner = idPart.substring(2, idPart.length() - 1);
-            String[] parts = inner.split("@", 2);
-            entry.setSummonId(parts[0]);
-
-            // СОХРАНЯЕМ ПРИЗЫВАТЕЛЯ
-            if (entry.getSummonName() != null && entry.getSummonId() != null) {
-                DatabaseManager.saveEntityType(entry.getSummonId(), entry.getSummonName(), "Player");
-            }
-
+            entityId = parts[0];
         } else {
-            entry.setSummonId(idPart);
-        }
-    }
-
-    private static void parseVictim(CombatLogEntry entry, String name, String idPart) {
-        entry.setVictimName((name == null || name.isEmpty() || name.equals("*")) ? "SELF" : name);
-
-        if (idPart == null || idPart.isEmpty() || idPart.equals("*")) {
-            entry.setVictimId("SELF");
-            return;
+            entityType = "Creature";
+            entityId = idPart;
         }
 
-        if (idPart.startsWith("P[")) {
-            String inner = idPart.substring(2, idPart.length() - 1);
-            String[] parts = inner.split("@", 2);
-            entry.setVictimId(parts[0]);
-
-            // СОХРАНЯЕМ ИГРОКА (жертву)
-            if (entry.getVictimName() != null && !entry.getVictimName().equals("SELF") && entry.getVictimId() != null) {
-                DatabaseManager.saveEntityType(entry.getVictimId(), entry.getVictimName(), "Player");
-            }
-
-        } else if (idPart.startsWith("C[")) {
-            String inner = idPart.substring(2, idPart.length() - 1);
-            String[] parts = inner.split(" ", 2);
-            entry.setVictimId(parts[0]);
-
-            // СОХРАНЯЕМ МОБА/ОБЪЕКТ (жертву)
-            if (entry.getVictimName() != null && !entry.getVictimName().equals("SELF") && entry.getVictimId() != null) {
-                DatabaseManager.saveEntityType(entry.getVictimId(), entry.getVictimName(), "Creature");
-            }
-
-        } else {
-            entry.setVictimId(idPart);
-        }
+        return new String[]{entityId, entityName, entityHandle, entityType};
     }
 
     // Остальные методы остаются без изменений...
