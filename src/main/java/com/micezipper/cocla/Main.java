@@ -9,12 +9,6 @@ public class Main {
         Config.init(args);
         DatabaseManager.init();
         LogWatcher.init();
-        
-        // print config
-        System.out.println("Configuration:\n  DB Host: " + Config.dbHost
-                + "\n  DB Name: " + Config.dbName
-                + "\n  Log Directory: " + Config.logDirectory
-                + "\n  Watch Interval: " + Config.watchInterval + "ms");
 
         // add shutdown hook for the correct exit
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
