@@ -5,8 +5,7 @@
 
 | | Branch | Status | Description |
 |---|--------|--------|-------------|
-| ✅ | **Current build** (`release/1.0-rc1`) | [![GitHub release](https://img.shields.io/github/v/release/micezipper/cocla?include_prereleases&sort=semver&cacheSeconds=0)](https://github.com/micezipper/cocla/releases) | The most recent published build |
-| 🚧 | **Development** (`release/1.0-rc2`) | [![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml/badge.svg?branch=release/1.0-rc2)](https://github.com/micezipper/cocla/actions/workflows/maven-rc2.yml) | Active development, bug fixes |
+| 🚧 | **Development** (`release/dev`) | [![Build RC2](https://github.com/micezipper/cocla/actions/workflows/maven-dev.yml/badge.svg?branch=release/dev)](https://github.com/micezipper/cocla/actions/workflows/maven-dev.yml) | Active development, bug fixes |
 | 🏷️ | **Release** (`main`) | [![Release](https://github.com/micezipper/cocla/actions/workflows/maven.yml/badge.svg)](https://github.com/micezipper/cocla/actions/workflows/maven.yml) | Stable releases |
 
 Headless Java application for forwarding Champions Online combat logs to MySQL database for Grafana visualization.
