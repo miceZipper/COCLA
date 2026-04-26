@@ -99,7 +99,7 @@ All components are included as-is without modification.
 
 | Component | Version | License | Source |
 |-----------|---------|---------|--------|
-| **OpenJDK** | 27+19 | GPLv2 with Classpath Exception | [https://github.com/openjdk/jdk](https://github.com/openjdk/jdk) |
+| **OpenJDK** | 26+35 | GPLv2 with Classpath Exception | [https://github.com/openjdk/jdk](https://github.com/openjdk/jdk) |
 | **MariaDB** | 12.2.2 | GPLv2 | [https://github.com/MariaDB/server](https://github.com/MariaDB/server) |
 | **Grafana** | 13.0.1 | AGPLv3 | [https://github.com/grafana/grafana](https://github.com/grafana/grafana) |
 | **HikariCP** | 7.0.2 | Apache 2.0 | [https://github.com/brettwooldridge/HikariCP](https://github.com/brettwooldridge/HikariCP) |
