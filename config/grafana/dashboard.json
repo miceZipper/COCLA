@@ -1,20 +1,22 @@
 {
-  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "apiVersion": "dashboard.grafana.app/v2",
   "kind": "Dashboard",
   "metadata": {
     "name": "ad5s68h",
     "namespace": "default",
-    "uid": "niJ1tI7TF6eXYhl0grbu5v8EXwWOLiRXEAHGGyDVhZsX",
-    "resourceVersion": "96",
-    "generation": 96,
-    "creationTimestamp": "2026-02-21T09:17:20Z",
+    "uid": "62459a39-ad02-4c97-aec6-fa4b4c1e5971",
+    "resourceVersion": "1777178904974010",
+    "generation": 13,
+    "creationTimestamp": "2026-04-18T17:34:09Z",
     "labels": {
-      "grafana.app/deprecatedInternalID": "2"
+      "grafana.app/deprecatedInternalID": "922273435402240"
     },
     "annotations": {
-      "grafana.app/createdBy": "user:afcpdiknon8qoa",
-      "grafana.app/updatedBy": "user:afcpdiknon8qoa",
-      "grafana.app/updatedTimestamp": "2026-02-23T15:21:14Z"
+      "grafana.app/createdBy": "user:ffjh93teoifpcc",
+      "grafana.app/folder": "",
+      "grafana.app/saved-from-ui": "Grafana v13.0.1 (a100054f21)",
+      "grafana.app/updatedBy": "user:ffjh93teoifpcc",
+      "grafana.app/updatedTimestamp": "2026-04-26T04:48:24Z"
     }
   },
   "spec": {
@@ -22,20 +24,20 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
-          "builtIn": true,
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
           "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
           "name": "Annotations & Alerts",
-          "query": {
-            "datasource": {
-              "name": "-- Grafana --"
-            },
-            "group": "grafana",
-            "kind": "DataQuery",
-            "spec": {},
-            "version": "v0"
-          }
+          "builtIn": true
         }
       }
     ],
@@ -45,6 +47,10 @@
       "panel-1": {
         "kind": "Panel",
         "spec": {
+          "id": 1,
+          "title": "Damage/healing dealt",
+          "description": "",
+          "links": [],
           "data": {
             "kind": "QueryGroup",
             "spec": {
@@ -52,19 +58,19 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "hidden": false,
                     "query": {
+                      "kind": "DataQuery",
+                      "group": "mysql",
+                      "version": "v0",
                       "datasource": {
                         "name": "mysql-cocla"
                       },
-                      "group": "mysql",
-                      "kind": "DataQuery",
                       "spec": {
                         "dataset": "cocla",
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    l.source_name as \"Player\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END), 0) as \"Damage\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END), 0) as \"Healing\"\r\nFROM combat_logs l\r\nLEFT JOIN entity_types e ON l.source_id = e.entity_id\r\nWHERE \r\n    l.log_timestamp BETWEEN $__timeFrom() AND $__timeTo()\r\n    AND l.attack_type != 'Power'\r\n    AND l.source_name IS NOT NULL\r\n    AND l.source_name != 'NULL'\r\n    AND l.source_name != ''\r\n    \r\n    -- Фильтр по атакующим\r\n    AND (\r\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e.entity_type = 'Creature')\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\r\n            AND l.source_name IN (${source_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по целям\r\n    AND (\r\n        l.victim_name = 'SELF'\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.victim_id AND e2.entity_type = 'Player'\r\n        ))\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.victim_id AND e2.entity_type = 'Creature'\r\n        ))\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\r\n            AND l.victim_name IN (${victim_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND ('All' IN (${power_name:sqlstring}) OR l.power_name IN (${power_name:sqlstring}))\r\n    \r\n    -- Фильтр по типу воздействия\r\n    AND (\r\n        'all' IN (${impact_type:sqlstring})\r\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\r\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\r\n    )\r\nGROUP BY l.source_name  -- добавили GROUP BY\r\nORDER BY (SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END) + \r\n          SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END)) DESC;",
+                        "rawSql": "SELECT \r\n    e_source.entity_name as \"Player\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END), 0) as \"Damage\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END), 0) as \"Healing\"\r\nFROM combat_logs l\r\nJOIN entities e_source ON l.source_id = e_source.id\r\nLEFT JOIN entities e_victim ON l.victim_id = e_victim.id\r\nLEFT JOIN powers p ON l.power_id = p.id\r\nWHERE \r\n    l.log_timestamp BETWEEN $__timeFrom() AND $__timeTo()\r\n    AND p.attack_type != 'Power'\r\n    \r\n    -- Фильтр по атакующим\r\n    AND (\r\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\r\n        OR (e_source.entity_type = 'Environment')\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\r\n            AND e_source.entity_name IN (${source_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по целям\r\n    AND (('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\r\n        OR e_victim.entity_name IN (${victim_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND p.power_name IN (${power_name:sqlstring})\r\n    \r\n    -- Фильтр по типу воздействия\r\n    AND (\r\n        'all' IN (${impact_type:sqlstring})\r\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\r\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\r\n    )\r\nGROUP BY e_source.entity_name\r\nORDER BY (SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END) + \r\n          SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END)) DESC;",
                         "sql": {
                           "columns": [
                             {
@@ -82,19 +88,18 @@
                           ],
                           "limit": 50
                         }
-                      },
-                      "version": "v0"
+                      }
                     },
-                    "refId": "A"
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
               ],
-              "queryOptions": {},
               "transformations": [
                 {
-                  "kind": "calculateField",
+                  "kind": "Transformation",
+                  "group": "calculateField",
                   "spec": {
-                    "id": "calculateField",
                     "options": {
                       "binary": {
                         "left": {
@@ -123,9 +128,9 @@
                   }
                 },
                 {
-                  "kind": "sortBy",
+                  "kind": "Transformation",
+                  "group": "sortBy",
                   "spec": {
-                    "id": "sortBy",
                     "options": {
                       "fields": {},
                       "sort": [
@@ -138,9 +143,9 @@
                   }
                 },
                 {
-                  "kind": "organize",
+                  "kind": "Transformation",
+                  "group": "organize",
                   "spec": {
-                    "id": "organize",
                     "options": {
                       "excludeByName": {
                         "Damage + Healing": true
@@ -153,19 +158,50 @@
                     }
                   }
                 }
-              ]
+              ],
+              "queryOptions": {}
             }
           },
-          "description": "",
-          "id": 1,
-          "links": [],
-          "title": "Damage/healing dealt",
           "vizConfig": {
-            "group": "barchart",
             "kind": "VizConfig",
+            "group": "barchart",
+            "version": "13.0.1",
             "spec": {
+              "options": {
+                "barRadius": 0.1,
+                "barWidth": 0.6,
+                "colorByField": "Total Damage",
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "orientation": "horizontal",
+                "showValue": "auto",
+                "stacking": "normal",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
+              },
               "fieldConfig": {
                 "defaults": {
+                  "unit": "none",
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
                   "color": {
                     "mode": "thresholds"
                   },
@@ -190,17 +226,7 @@
                       "mode": "off"
                     }
                   },
-                  "fieldMinMax": false,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "none"
+                  "fieldMinMax": false
                 },
                 "overrides": [
                   {
@@ -219,38 +245,18 @@
                     ]
                   }
                 ]
-              },
-              "options": {
-                "barRadius": 0.1,
-                "barWidth": 0.6,
-                "colorByField": "Total Damage",
-                "fullHighlight": false,
-                "groupWidth": 0.7,
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "orientation": "horizontal",
-                "showValue": "auto",
-                "stacking": "normal",
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                },
-                "xTickLabelRotation": 0,
-                "xTickLabelSpacing": 0
               }
-            },
-            "version": "12.2.1"
+            }
           }
         }
       },
       "panel-2": {
         "kind": "Panel",
         "spec": {
+          "id": 2,
+          "title": "Damage/healing recieved",
+          "description": "",
+          "links": [],
           "data": {
             "kind": "QueryGroup",
             "spec": {
@@ -258,19 +264,19 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "hidden": false,
                     "query": {
+                      "kind": "DataQuery",
+                      "group": "mysql",
+                      "version": "v0",
                       "datasource": {
                         "name": "mysql-cocla"
                       },
-                      "group": "mysql",
-                      "kind": "DataQuery",
                       "spec": {
                         "dataset": "cocla",
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    l.victim_name as \"Target\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END), 0) as \"Damage Taken\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END), 0) as \"Healing Received\"\r\nFROM combat_logs l\r\nLEFT JOIN entity_types e ON l.victim_id = e.entity_id\r\nWHERE \r\n    l.log_timestamp BETWEEN $__timeFrom() AND $__timeTo()\r\n    AND l.attack_type != 'Power'\r\n    AND l.victim_name IS NOT NULL\r\n    AND l.victim_name != 'NULL'\r\n    AND l.victim_name != ''\r\n    \r\n    -- Фильтр по атакующим (кто наносит)\r\n    AND (\r\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.source_id AND e2.entity_type = 'Player'\r\n        ))\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.source_id AND e2.entity_type = 'Creature'\r\n        ))\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\r\n            AND l.source_name IN (${source_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по целям (кто получает) - ИСПРАВЛЕНО\r\n    AND (\r\n        -- Если выбран SELF\r\n        ('SELF' IN (${victim_player:sqlstring}) AND l.victim_name = 'SELF')\r\n        -- Если выбраны ALL_PLAYERS\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) \r\n            AND e.entity_type = 'Player' \r\n            AND l.victim_name != 'SELF')\r\n        -- Если выбраны ALL_ENEMIES\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) \r\n            AND e.entity_type = 'Creature' \r\n            AND l.victim_name != 'SELF')\r\n        -- Если выбраны конкретные имена\r\n        OR (\r\n            NOT 'SELF' IN (${victim_player:sqlstring})\r\n            AND NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\r\n            AND l.victim_name IN (${victim_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND ('All' IN (${power_name:sqlstring}) OR l.power_name IN (${power_name:sqlstring}))\r\n    \r\n    -- Фильтр по типу воздействия\r\n    AND (\r\n        'all' IN (${impact_type:sqlstring})\r\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\r\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\r\n    )\r\nGROUP BY l.victim_name\r\nORDER BY (SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END) + \r\n          SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END)) DESC;",
+                        "rawSql": "SELECT \r\n    e_victim.entity_name as \"Target\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END), 0) as \"Damage Taken\",\r\n    ROUND(SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END), 0) as \"Healing Received\"\r\nFROM combat_logs l\r\nJOIN entities e_victim ON l.victim_id = e_victim.id\r\nLEFT JOIN entities e_source ON l.source_id = e_source.id\r\nLEFT JOIN powers p ON l.power_id = p.id\r\nWHERE \r\n    $__timeFilter(l.log_timestamp)\r\n    AND p.attack_type != 'Power'\r\n    \r\n    -- Фильтр по атакующим\r\n    AND (\r\n        '$__all' IN (${source_player:sqlstring})\r\n        OR ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\r\n        OR (e_source.entity_type = 'Environment')\r\n        OR e_source.entity_name IN (${source_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по целям\r\n    AND (\r\n        '$__all' IN (${victim_player:sqlstring})\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\r\n        OR e_victim.entity_name IN (${victim_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND (\r\n        '$__all' IN (${power_name:sqlstring})\r\n        OR p.power_name IN (${power_name:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по типу воздействия\r\n    AND (\r\n        'all' IN (${impact_type:sqlstring})\r\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\r\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\r\n    )\r\nGROUP BY e_victim.entity_name\r\nORDER BY (SUM(CASE WHEN l.actual_impact > 0 THEN l.actual_impact ELSE 0 END) + \r\n          SUM(CASE WHEN l.actual_impact < 0 THEN ABS(l.actual_impact) ELSE 0 END)) DESC;",
                         "sql": {
                           "columns": [
                             {
@@ -288,19 +294,18 @@
                           ],
                           "limit": 50
                         }
-                      },
-                      "version": "v0"
+                      }
                     },
-                    "refId": "A"
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
               ],
-              "queryOptions": {},
               "transformations": [
                 {
-                  "kind": "calculateField",
+                  "kind": "Transformation",
+                  "group": "calculateField",
                   "spec": {
-                    "id": "calculateField",
                     "options": {
                       "binary": {
                         "left": {
@@ -324,9 +329,9 @@
                   }
                 },
                 {
-                  "kind": "sortBy",
+                  "kind": "Transformation",
+                  "group": "sortBy",
                   "spec": {
-                    "id": "sortBy",
                     "options": {
                       "fields": {},
                       "sort": [
@@ -339,9 +344,9 @@
                   }
                 },
                 {
-                  "kind": "organize",
+                  "kind": "Transformation",
+                  "group": "organize",
                   "spec": {
-                    "id": "organize",
                     "options": {
                       "excludeByName": {
                         "Damage Taken + Healing Received": true
@@ -352,19 +357,48 @@
                     }
                   }
                 }
-              ]
+              ],
+              "queryOptions": {}
             }
           },
-          "description": "",
-          "id": 2,
-          "links": [],
-          "title": "Damage/healing recieved",
           "vizConfig": {
-            "group": "barchart",
             "kind": "VizConfig",
+            "group": "barchart",
+            "version": "13.0.1",
             "spec": {
+              "options": {
+                "barRadius": 0.1,
+                "barWidth": 0.6,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "orientation": "horizontal",
+                "showValue": "auto",
+                "stacking": "normal",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
+              },
               "fieldConfig": {
                 "defaults": {
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
                   "color": {
                     "mode": "thresholds"
                   },
@@ -389,16 +423,7 @@
                       "mode": "off"
                     }
                   },
-                  "fieldMinMax": false,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  }
+                  "fieldMinMax": false
                 },
                 "overrides": [
                   {
@@ -417,37 +442,18 @@
                     ]
                   }
                 ]
-              },
-              "options": {
-                "barRadius": 0.1,
-                "barWidth": 0.6,
-                "fullHighlight": false,
-                "groupWidth": 0.7,
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "orientation": "horizontal",
-                "showValue": "auto",
-                "stacking": "normal",
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                },
-                "xTickLabelRotation": 0,
-                "xTickLabelSpacing": 0
               }
-            },
-            "version": "12.2.1"
+            }
           }
         }
       },
       "panel-3": {
         "kind": "Panel",
         "spec": {
+          "id": 3,
+          "title": "Damage/healing dealt per second",
+          "description": "",
+          "links": [],
           "data": {
             "kind": "QueryGroup",
             "spec": {
@@ -455,19 +461,19 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "hidden": false,
                     "query": {
+                      "kind": "DataQuery",
+                      "group": "mysql",
+                      "version": "v0",
                       "datasource": {
                         "name": "mysql-cocla"
                       },
-                      "group": "mysql",
-                      "kind": "DataQuery",
                       "spec": {
                         "dataset": "cocla",
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    $__timeGroup(l.log_timestamp, '5s') as time,\r\n    l.source_name as metric,\r\n    SUM(\r\n        CASE \r\n            WHEN 'heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            WHEN 'damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            ELSE 0\r\n        END\r\n    ) / 5 as \"DPS / HPS\"\r\nFROM combat_logs l\r\nLEFT JOIN entity_types e ON l.source_id = e.entity_id\r\nWHERE \r\n    l.attack_type != 'Power'\r\n    AND $__timeFilter(l.log_timestamp)\r\n    \r\n    -- Фильтр по атакующим\r\n    AND (\r\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e.entity_type = 'Creature')\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\r\n            AND l.source_name IN (${source_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по целям\r\n    AND (\r\n        l.victim_name = 'SELF'\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.victim_id AND e2.entity_type = 'Player'\r\n        ))\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.victim_id AND e2.entity_type = 'Creature'\r\n        ))\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\r\n            AND l.victim_name IN (${victim_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND ('All' IN (${power_name:sqlstring}) OR l.power_name IN (${power_name:sqlstring}))\r\n    \r\n    -- Фильтр по типу воздействия\r\n    AND (\r\n        'all' IN (${impact_type:sqlstring})\r\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\r\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\r\n    )\r\nGROUP BY 1, 2;",
+                        "rawSql": "SELECT \r\n    $__timeGroup(l.log_timestamp, '5s') as time,\r\n    e_source.entity_name as metric,\r\n    SUM(\r\n        CASE \r\n            WHEN 'heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            WHEN 'damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            ELSE 0\r\n        END\r\n    ) / 5 as \"DPS / HPS\"\r\nFROM combat_logs l\r\nJOIN entities e_source ON l.source_id = e_source.id\r\nLEFT JOIN entities e_victim ON l.victim_id = e_victim.id\r\nLEFT JOIN powers p ON l.power_id = p.id\r\nWHERE \r\n    $__timeFilter(l.log_timestamp)\r\n    AND p.attack_type != 'Power'\r\n    AND e_source.entity_name IS NOT NULL\r\n    AND e_source.entity_name != ''\r\n    \r\n    -- Фильтр по атакующим\r\n    AND (\r\n        '$__all' IN (${source_player:sqlstring})\r\n        OR ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\r\n        OR (e_source.entity_type = 'Environment')\r\n        OR e_source.entity_name IN (${source_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по целям\r\n    AND (\r\n        '$__all' IN (${victim_player:sqlstring})\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\r\n        OR e_victim.entity_name IN (${victim_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND (\r\n        '$__all' IN (${power_name:sqlstring})\r\n        OR p.power_name IN (${power_name:sqlstring})\r\n    )\r\nGROUP BY 1, 2;",
                         "sql": {
                           "columns": [
                             {
@@ -485,27 +491,50 @@
                           ],
                           "limit": 50
                         }
-                      },
-                      "version": "v0"
+                      }
                     },
-                    "refId": "A"
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
               ],
-              "queryOptions": {},
-              "transformations": []
+              "transformations": [],
+              "queryOptions": {}
             }
           },
-          "description": "",
-          "id": 3,
-          "links": [],
-          "title": "Damage/healing dealt per second",
           "vizConfig": {
-            "group": "timeseries",
             "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.0.1",
             "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
               "fieldConfig": {
                 "defaults": {
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
                   "color": {
                     "mode": "palette-classic"
                   },
@@ -543,40 +572,21 @@
                       "mode": "off"
                     }
                   },
-                  "fieldMinMax": false,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  }
+                  "fieldMinMax": false
                 },
                 "overrides": []
-              },
-              "options": {
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
               }
-            },
-            "version": "12.2.1"
+            }
           }
         }
       },
       "panel-4": {
         "kind": "Panel",
         "spec": {
+          "id": 4,
+          "title": "Damage/healing recieved per second",
+          "description": "",
+          "links": [],
           "data": {
             "kind": "QueryGroup",
             "spec": {
@@ -584,19 +594,19 @@
                 {
                   "kind": "PanelQuery",
                   "spec": {
-                    "hidden": false,
                     "query": {
+                      "kind": "DataQuery",
+                      "group": "mysql",
+                      "version": "v0",
                       "datasource": {
                         "name": "mysql-cocla"
                       },
-                      "group": "mysql",
-                      "kind": "DataQuery",
                       "spec": {
                         "dataset": "cocla",
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \r\n    $__timeGroup(l.log_timestamp, '5s') as time,\r\n    l.victim_name as metric,\r\n    SUM(\r\n        CASE \r\n            WHEN 'heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            WHEN 'damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            ELSE 0\r\n        END\r\n    ) / 5 as \"DPS / HPS Received\"\r\nFROM combat_logs l\r\nLEFT JOIN entity_types e ON l.victim_id = e.entity_id\r\nWHERE \r\n    l.attack_type != 'Power'\r\n    AND $__timeFilter(l.log_timestamp)\r\n    \r\n    -- Фильтр по атакующим (кто наносит)\r\n    AND (\r\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.source_id AND e2.entity_type = 'Player'\r\n        ))\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND EXISTS (\r\n            SELECT 1 FROM entity_types e2 WHERE e2.entity_id = l.source_id AND e2.entity_type = 'Creature'\r\n        ))\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\r\n            AND l.source_name IN (${source_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по целям (кто получает)\r\n    AND (\r\n        l.victim_name = 'SELF'\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e.entity_type = 'Creature')\r\n        OR (\r\n            NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\r\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\r\n            AND l.victim_name IN (${victim_player:sqlstring})\r\n        )\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND ('All' IN (${power_name:sqlstring}) OR l.power_name IN (${power_name:sqlstring}))\r\n    \r\n    -- Фильтр по типу воздействия\r\n    AND (\r\n        'all' IN (${impact_type:sqlstring})\r\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\r\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\r\n    )\r\nGROUP BY 1, 2;",
+                        "rawSql": "SELECT \r\n    $__timeGroup(l.log_timestamp, '5s') as time,\r\n    e_victim.entity_name as metric,\r\n    SUM(\r\n        CASE \r\n            WHEN 'heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            WHEN 'damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact > 0 THEN l.actual_impact\r\n            WHEN 'all' IN (${impact_type:sqlstring}) AND l.actual_impact < 0 THEN ABS(l.actual_impact)\r\n            ELSE 0\r\n        END\r\n    ) / 5 as \"DPS / HPS Received\"\r\nFROM combat_logs l\r\nJOIN entities e_victim ON l.victim_id = e_victim.id\r\nLEFT JOIN entities e_source ON l.source_id = e_source.id\r\nLEFT JOIN powers p ON l.power_id = p.id\r\nWHERE \r\n    $__timeFilter(l.log_timestamp)\r\n    AND p.attack_type != 'Power'\r\n    AND e_victim.entity_name IS NOT NULL\r\n    AND e_victim.entity_name != ''\r\n    \r\n    -- Фильтр по атакующим\r\n    AND (\r\n        '$__all' IN (${source_player:sqlstring})\r\n        OR ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\r\n        OR (e_source.entity_type = 'Environment')\r\n        OR e_source.entity_name IN (${source_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по целям\r\n    AND (\r\n        '$__all' IN (${victim_player:sqlstring})\r\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\r\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\r\n        OR e_victim.entity_name IN (${victim_player:sqlstring})\r\n    )\r\n    \r\n    -- Фильтр по способностям\r\n    AND (\r\n        '$__all' IN (${power_name:sqlstring})\r\n        OR p.power_name IN (${power_name:sqlstring})\r\n    )\r\nGROUP BY 1, 2;",
                         "sql": {
                           "columns": [
                             {
@@ -614,27 +624,50 @@
                           ],
                           "limit": 50
                         }
-                      },
-                      "version": "v0"
+                      }
                     },
-                    "refId": "A"
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
               ],
-              "queryOptions": {},
-              "transformations": []
+              "transformations": [],
+              "queryOptions": {}
             }
           },
-          "description": "",
-          "id": 4,
-          "links": [],
-          "title": "Damage/healing recieved per second",
           "vizConfig": {
-            "group": "timeseries",
             "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.0.1",
             "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
               "fieldConfig": {
                 "defaults": {
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
                   "color": {
                     "mode": "palette-classic"
                   },
@@ -672,34 +705,11 @@
                       "mode": "off"
                     }
                   },
-                  "fieldMinMax": false,
-                  "thresholds": {
-                    "mode": "percentage",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  }
+                  "fieldMinMax": false
                 },
                 "overrides": []
-              },
-              "options": {
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
               }
-            },
-            "version": "12.2.1"
+            }
           }
         }
       }
@@ -711,53 +721,53 @@
           {
             "kind": "GridLayoutItem",
             "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 14,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-1"
-              },
-              "height": 14,
-              "width": 12,
-              "x": 0,
-              "y": 0
+              }
             }
           },
           {
             "kind": "GridLayoutItem",
             "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 14,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-3"
-              },
-              "height": 14,
-              "width": 12,
-              "x": 12,
-              "y": 0
+              }
             }
           },
           {
             "kind": "GridLayoutItem",
             "spec": {
+              "x": 0,
+              "y": 14,
+              "width": 12,
+              "height": 14,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-2"
-              },
-              "height": 14,
-              "width": 12,
-              "x": 0,
-              "y": 14
+              }
             }
           },
           {
             "kind": "GridLayoutItem",
             "spec": {
+              "x": 12,
+              "y": 14,
+              "width": 12,
+              "height": 14,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-4"
-              },
-              "height": 14,
-              "width": 12,
-              "x": 12,
-              "y": 14
+              }
             }
           }
         ]
@@ -768,6 +778,9 @@
     "preload": false,
     "tags": [],
     "timeSettings": {
+      "timezone": "browser",
+      "from": "2026-02-23T03:35:40.040Z",
+      "to": "2026-02-23T14:06:11.118Z",
       "autoRefresh": "",
       "autoRefreshIntervals": [
         "5s",
@@ -781,149 +794,237 @@
         "2h",
         "1d"
       ],
-      "fiscalYearStartMonth": 0,
-      "from": "2026-02-23T03:35:40.040Z",
       "hideTimepicker": false,
-      "timezone": "browser",
-      "to": "2026-02-23T14:06:11.118Z"
+      "fiscalYearStartMonth": 0
     },
     "title": "COCLA",
     "variables": [
       {
         "kind": "QueryVariable",
         "spec": {
-          "allowCustomValue": false,
-          "current": {
-            "text": "All",
-            "value": [
-              "$__all"
-            ]
-          },
-          "definition": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    -- Все игроки (группа)\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👥 All Players' as __text,\n        'Select all players' as __description,\n        -2 as sort_order\n    \n    UNION ALL\n    \n    -- Все существа (группа)\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'Select all creatures' as __description,\n        -1 as sort_order\n    \n    UNION ALL\n    \n    -- Индивидуальные игроки (исключая SELF)\n    SELECT DISTINCT\n        l.source_name as __value,\n        CONCAT('👤 ', l.source_name) as __text,\n        'Player' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.source_id = e.entity_id\n    WHERE \n        e.entity_type = 'Player'\n        AND l.source_name IS NOT NULL\n        AND l.source_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n    \n    -- Индивидуальные существа (исключая SELF)\n    SELECT DISTINCT\n        l.source_name as __value,\n        CONCAT('🔴 ', l.source_name) as __text,\n        'Creature' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.source_id = e.entity_id\n    WHERE \n        e.entity_type = 'Creature'\n        AND l.source_name IS NOT NULL\n        AND l.source_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n) all_sources\nWHERE __value != 'SELF'  -- дополнительная фильтрация\nORDER BY sort_order, __text;",
-          "hide": "dontHide",
-          "includeAll": true,
-          "label": "Atacker/Healer",
-          "multi": true,
           "name": "source_player",
-          "options": [],
-          "query": {
-            "datasource": {
-              "name": "mysql-cocla"
-            },
-            "group": "mysql",
-            "kind": "DataQuery",
-            "spec": {
-              "__legacyStringValue": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    -- Все игроки (группа)\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👥 All Players' as __text,\n        'Select all players' as __description,\n        -2 as sort_order\n    \n    UNION ALL\n    \n    -- Все существа (группа)\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'Select all creatures' as __description,\n        -1 as sort_order\n    \n    UNION ALL\n    \n    -- Индивидуальные игроки (исключая SELF)\n    SELECT DISTINCT\n        l.source_name as __value,\n        CONCAT('👤 ', l.source_name) as __text,\n        'Player' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.source_id = e.entity_id\n    WHERE \n        e.entity_type = 'Player'\n        AND l.source_name IS NOT NULL\n        AND l.source_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n    \n    -- Индивидуальные существа (исключая SELF)\n    SELECT DISTINCT\n        l.source_name as __value,\n        CONCAT('🔴 ', l.source_name) as __text,\n        'Creature' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.source_id = e.entity_id\n    WHERE \n        e.entity_type = 'Creature'\n        AND l.source_name IS NOT NULL\n        AND l.source_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n) all_sources\nWHERE __value != 'SELF'  -- дополнительная фильтрация\nORDER BY sort_order, __text;"
-            },
-            "version": "v0"
-          },
-          "refresh": "onTimeRangeChanged",
-          "regex": "",
-          "skipUrlSync": false,
-          "sort": "disabled"
-        }
-      },
-      {
-        "kind": "QueryVariable",
-        "spec": {
-          "allowCustomValue": false,
           "current": {
             "text": "All",
             "value": [
               "$__all"
             ]
           },
-          "definition": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    -- SELF отдельно\n    SELECT \n        'SELF' as __value,\n        '🔄 Self' as __text,\n        'Self-targeting effects' as __description,\n        -3 as sort_order\n    \n    UNION ALL\n    \n    -- Все игроки (группа)\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👥 All Players' as __text,\n        'Select all players' as __description,\n        -2 as sort_order\n    \n    UNION ALL\n    \n    -- Все враги (группа)\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'Select all enemies/creatures' as __description,\n        -1 as sort_order\n    \n    UNION ALL\n    \n    -- Индивидуальные игроки\n    SELECT DISTINCT\n        l.victim_name as __value,\n        CONCAT('👤 ', l.victim_name) as __text,\n        'Player' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.victim_id = e.entity_id\n    WHERE \n        e.entity_type = 'Player'\n        AND l.victim_name IS NOT NULL\n        AND l.victim_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n    \n    -- Индивидуальные враги\n    SELECT DISTINCT\n        l.victim_name as __value,\n        CONCAT('🔴 ', l.victim_name) as __text,\n        'Enemy/Creature' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.victim_id = e.entity_id\n    WHERE \n        e.entity_type = 'Creature'\n        AND l.victim_name IS NOT NULL\n        AND l.victim_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n) all_victims\nORDER BY sort_order, __text;",
+          "label": "Atacker/Healer",
           "hide": "dontHide",
-          "includeAll": true,
-          "label": "Target",
-          "multi": true,
-          "name": "victim_player",
-          "options": [],
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
           "query": {
+            "kind": "DataQuery",
+            "group": "mysql",
+            "version": "v0",
             "datasource": {
               "name": "mysql-cocla"
             },
-            "group": "mysql",
-            "kind": "DataQuery",
             "spec": {
-              "__legacyStringValue": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    -- SELF отдельно\n    SELECT \n        'SELF' as __value,\n        '🔄 Self' as __text,\n        'Self-targeting effects' as __description,\n        -3 as sort_order\n    \n    UNION ALL\n    \n    -- Все игроки (группа)\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👥 All Players' as __text,\n        'Select all players' as __description,\n        -2 as sort_order\n    \n    UNION ALL\n    \n    -- Все враги (группа)\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'Select all enemies/creatures' as __description,\n        -1 as sort_order\n    \n    UNION ALL\n    \n    -- Индивидуальные игроки\n    SELECT DISTINCT\n        l.victim_name as __value,\n        CONCAT('👤 ', l.victim_name) as __text,\n        'Player' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.victim_id = e.entity_id\n    WHERE \n        e.entity_type = 'Player'\n        AND l.victim_name IS NOT NULL\n        AND l.victim_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n    \n    -- Индивидуальные враги\n    SELECT DISTINCT\n        l.victim_name as __value,\n        CONCAT('🔴 ', l.victim_name) as __text,\n        'Enemy/Creature' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entity_types e ON l.victim_id = e.entity_id\n    WHERE \n        e.entity_type = 'Creature'\n        AND l.victim_name IS NOT NULL\n        AND l.victim_name NOT IN ('NULL', '', 'SELF')\n        AND $__timeFilter(l.log_timestamp)\n) all_victims\nORDER BY sort_order, __text;"
-            },
-            "version": "v0"
+              "editorMode": "code",
+              "format": "table",
+              "query": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👤 All Players' as __text,\n        'All players' as __description,\n        -2 as sort_order\n    UNION ALL\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'All enemies/creatures' as __description,\n        -1 as sort_order\n\n    UNION ALL\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🌋 ', e.entity_name) as __text,\n        'Environment' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Environment'\n        AND $__timeFilter(l.log_timestamp)\n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('👤 ',e.entity_name) as __text,\n        'Player' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Player'\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🔴 ',e.entity_name) as __text,\n        'Creature' as __description,\n        2 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Creature'\n        AND $__timeFilter(l.log_timestamp)\n) subquery\nORDER BY sort_order, __text;",
+              "rawQuery": true,
+              "rawSql": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👤 All Players' as __text,\n        'All players' as __description,\n        -2 as sort_order\n    UNION ALL\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'All enemies/creatures' as __description,\n        -1 as sort_order\n\n    UNION ALL\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🌋 ', e.entity_name) as __text,\n        'Environment' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Environment'\n        AND $__timeFilter(l.log_timestamp)\n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('👤 ',e.entity_name) as __text,\n        'Player' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Player'\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🔴 ',e.entity_name) as __text,\n        'Creature' as __description,\n        2 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Creature'\n        AND $__timeFilter(l.log_timestamp)\n) subquery\nORDER BY sort_order, __text;",
+              "refId": "SQLVariableQueryEditor-VariableQuery",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
           },
-          "refresh": "onTimeRangeChanged",
           "regex": "",
-          "skipUrlSync": false,
-          "sort": "disabled"
+          "regexApplyTo": "value",
+          "sort": "disabled",
+          "definition": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👤 All Players' as __text,\n        'All players' as __description,\n        -2 as sort_order\n    UNION ALL\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'All enemies/creatures' as __description,\n        -1 as sort_order\n\n    UNION ALL\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🌋 ', e.entity_name) as __text,\n        'Environment' as __description,\n        0 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Environment'\n        AND $__timeFilter(l.log_timestamp)\n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('👤 ',e.entity_name) as __text,\n        'Player' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Player'\n        AND $__timeFilter(l.log_timestamp)\n    \n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🔴 ',e.entity_name) as __text,\n        'Creature' as __description,\n        2 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.source_id = e.id\n    WHERE \n        e.entity_type = 'Creature'\n        AND $__timeFilter(l.log_timestamp)\n) subquery\nORDER BY sort_order, __text;",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": false
         }
       },
       {
         "kind": "QueryVariable",
         "spec": {
-          "allowCustomValue": false,
+          "name": "victim_player",
+          "current": {
+            "text": "All",
+            "value": [
+              "$__all"
+            ]
+          },
+          "label": "Target",
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "mysql",
+            "version": "v0",
+            "datasource": {
+              "name": "mysql-cocla"
+            },
+            "spec": {
+              "editorMode": "code",
+              "format": "table",
+              "query": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👤 All Players' as __text,\n        'All players' as __description,\n        -2 as sort_order\n    UNION ALL\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'All enemies/creatures' as __description,\n        -1 as sort_order\n    UNION ALL\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('👤 ',e.entity_name) as __text,\n        'Player' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.victim_id = e.id\n    WHERE \n        e.entity_type = 'Player'\n        AND $__timeFilter(l.log_timestamp)\n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🔴 ',e.entity_name) as __text,\n        'Creature' as __description,\n        2 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.victim_id = e.id\n    WHERE \n        e.entity_type = 'Creature'\n        AND $__timeFilter(l.log_timestamp)\n) subquery\nORDER BY sort_order, __text;",
+              "rawQuery": true,
+              "rawSql": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👤 All Players' as __text,\n        'All players' as __description,\n        -2 as sort_order\n    UNION ALL\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'All enemies/creatures' as __description,\n        -1 as sort_order\n    UNION ALL\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('👤 ',e.entity_name) as __text,\n        'Player' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.victim_id = e.id\n    WHERE \n        e.entity_type = 'Player'\n        AND $__timeFilter(l.log_timestamp)\n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🔴 ',e.entity_name) as __text,\n        'Creature' as __description,\n        2 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.victim_id = e.id\n    WHERE \n        e.entity_type = 'Creature'\n        AND $__timeFilter(l.log_timestamp)\n) subquery\nORDER BY sort_order, __text;",
+              "refId": "SQLVariableQueryEditor-VariableQuery",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "disabled",
+          "definition": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT \n        'ALL_PLAYERS' as __value,\n        '👤 All Players' as __text,\n        'All players' as __description,\n        -2 as sort_order\n    UNION ALL\n    SELECT \n        'ALL_ENEMIES' as __value,\n        '🔴 All Creatures' as __text,\n        'All enemies/creatures' as __description,\n        -1 as sort_order\n    UNION ALL\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('👤 ',e.entity_name) as __text,\n        'Player' as __description,\n        1 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.victim_id = e.id\n    WHERE \n        e.entity_type = 'Player'\n        AND $__timeFilter(l.log_timestamp)\n    UNION ALL\n\n    SELECT DISTINCT\n        e.entity_name as __value,\n        CONCAT('🔴 ',e.entity_name) as __text,\n        'Creature' as __description,\n        2 as sort_order\n    FROM combat_logs l\n    JOIN entities e ON l.victim_id = e.id\n    WHERE \n        e.entity_type = 'Creature'\n        AND $__timeFilter(l.log_timestamp)\n) subquery\nORDER BY sort_order, __text;",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "impact_type",
           "current": {
             "text": "⚔️ All",
             "value": "all"
           },
-          "definition": "-- Типы воздействия\nSELECT 'damage' as __value, '💥 Damage' as __text\nUNION ALL\nSELECT 'heal' as __value, '💚 Healing' as __text\nUNION ALL\nSELECT 'all' as __value, '⚔️ All' as __text;",
-          "hide": "dontHide",
-          "includeAll": false,
           "label": "Impact type",
-          "multi": false,
-          "name": "impact_type",
-          "options": [],
+          "hide": "dontHide",
+          "refresh": "onDashboardLoad",
+          "skipUrlSync": false,
           "query": {
+            "kind": "DataQuery",
+            "group": "mysql",
+            "version": "v0",
             "datasource": {
               "name": "mysql-cocla"
             },
-            "group": "mysql",
-            "kind": "DataQuery",
             "spec": {
-              "__legacyStringValue": "-- Типы воздействия\nSELECT 'damage' as __value, '💥 Damage' as __text\nUNION ALL\nSELECT 'heal' as __value, '💚 Healing' as __text\nUNION ALL\nSELECT 'all' as __value, '⚔️ All' as __text;"
-            },
-            "version": "v0"
+              "editorMode": "code",
+              "format": "table",
+              "query": "SELECT 'damage' as __value, '💥 Damage' as __text\nUNION ALL\nSELECT 'heal' as __value, '💚 Healing' as __text\nUNION ALL\nSELECT 'all' as __value, '⚔️ All' as __text;",
+              "rawQuery": true,
+              "rawSql": "SELECT 'damage' as __value, '💥 Damage' as __text\nUNION ALL\nSELECT 'heal' as __value, '💚 Healing' as __text\nUNION ALL\nSELECT 'all' as __value, '⚔️ All' as __text;",
+              "refId": "SQLVariableQueryEditor-VariableQuery",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
           },
-          "refresh": "onDashboardLoad",
           "regex": "",
-          "skipUrlSync": false,
-          "sort": "disabled"
+          "regexApplyTo": "value",
+          "sort": "disabled",
+          "definition": "SELECT 'damage' as __value, '💥 Damage' as __text\nUNION ALL\nSELECT 'heal' as __value, '💚 Healing' as __text\nUNION ALL\nSELECT 'all' as __value, '⚔️ All' as __text;",
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false
         }
       },
       {
         "kind": "QueryVariable",
         "spec": {
-          "allowCustomValue": false,
+          "name": "power_name",
           "current": {
             "text": "All",
             "value": [
               "$__all"
             ]
           },
-          "definition": "SELECT DISTINCT \n    l.power_name as __value,\n    l.power_name as __text,\n    CONCAT('Uses: ', COUNT(*)) as __description\nFROM combat_logs l\nLEFT JOIN entity_types e_source ON l.source_id = e_source.entity_id\nLEFT JOIN entity_types e_victim ON l.victim_id = e_victim.entity_id\nWHERE \n    l.power_name IS NOT NULL \n    AND l.power_name != ''\n    AND $__timeFilter(l.log_timestamp)\n    \n    -- Фильтр по атакующим (source_player)\n    AND (\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\n        OR (\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\n            AND l.source_name IN (${source_player:sqlstring})\n        )\n    )\n    \n    -- Фильтр по целям (victim_player)\n    AND (\n        ('SELF' IN (${victim_player:sqlstring}) AND l.victim_name = 'SELF')\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) \n            AND e_victim.entity_type = 'Player' \n            AND l.victim_name != 'SELF')\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) \n            AND e_victim.entity_type = 'Creature' \n            AND l.victim_name != 'SELF')\n        OR (\n            NOT 'SELF' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\n            AND l.victim_name IN (${victim_player:sqlstring})\n        )\n    )\n    \n    -- Фильтр по типу воздействия (impact_type)\n    AND (\n        'all' IN (${impact_type:sqlstring})\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\n    )\n    \n    -- Фильтр по энергии\n    AND l.attack_type != 'Power'\n    \nGROUP BY l.power_name\nORDER BY l.power_name;",
-          "hide": "dontHide",
-          "includeAll": true,
           "label": "Power",
-          "multi": true,
-          "name": "power_name",
-          "options": [],
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
           "query": {
+            "kind": "DataQuery",
+            "group": "mysql",
+            "version": "v0",
             "datasource": {
               "name": "mysql-cocla"
             },
-            "group": "mysql",
-            "kind": "DataQuery",
             "spec": {
-              "__legacyStringValue": "SELECT DISTINCT \n    l.power_name as __value,\n    l.power_name as __text,\n    CONCAT('Uses: ', COUNT(*)) as __description\nFROM combat_logs l\nLEFT JOIN entity_types e_source ON l.source_id = e_source.entity_id\nLEFT JOIN entity_types e_victim ON l.victim_id = e_victim.entity_id\nWHERE \n    l.power_name IS NOT NULL \n    AND l.power_name != ''\n    AND $__timeFilter(l.log_timestamp)\n    \n    -- Фильтр по атакующим (source_player)\n    AND (\n        ('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\n        OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\n        OR (\n            NOT 'ALL_PLAYERS' IN (${source_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${source_player:sqlstring})\n            AND l.source_name IN (${source_player:sqlstring})\n        )\n    )\n    \n    -- Фильтр по целям (victim_player)\n    AND (\n        ('SELF' IN (${victim_player:sqlstring}) AND l.victim_name = 'SELF')\n        OR ('ALL_PLAYERS' IN (${victim_player:sqlstring}) \n            AND e_victim.entity_type = 'Player' \n            AND l.victim_name != 'SELF')\n        OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) \n            AND e_victim.entity_type = 'Creature' \n            AND l.victim_name != 'SELF')\n        OR (\n            NOT 'SELF' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\n            AND l.victim_name IN (${victim_player:sqlstring})\n        )\n    )\n    \n    -- Фильтр по типу воздействия (impact_type)\n    AND (\n        'all' IN (${impact_type:sqlstring})\n        OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\n        OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\n    )\n    \n    -- Фильтр по энергии\n    AND l.attack_type != 'Power'\n    \nGROUP BY l.power_name\nORDER BY l.power_name;"
-            },
-            "version": "v0"
+              "editorMode": "code",
+              "format": "table",
+              "query": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT DISTINCT\n        COALESCE(p.power_name, p.power_id) as __value,\n        COALESCE(p.power_name, CONCAT('⚠️ ', p.power_id)) as __text,\n        CONCAT('Uses: ', COUNT(*)) as __description,\n        CASE WHEN p.power_name IS NULL THEN 2 ELSE 1 END as sort_order\n    FROM combat_logs l\n    JOIN powers p ON l.power_id = p.id\n    LEFT JOIN entities e_source ON l.source_id = e_source.id\n    LEFT JOIN entities e_victim ON l.victim_id = e_victim.id\n    WHERE \n        $__timeFilter(l.log_timestamp)\n        -- фильтр по выбранным source_player\n        AND (('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\n            OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\n            OR e_source.entity_name IN (${source_player:sqlstring})\n        )\n        -- фильтр по выбранным victim_player\n        AND (('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\n            OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\n            OR (NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\n            AND e_victim.entity_name IN (${victim_player:sqlstring})\n        )\n        )\n        -- фильтр по impact_type\n        AND (\n            'all' IN (${impact_type:sqlstring})\n            OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\n            OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\n        )\n        AND p.attack_type != 'Power'\n    GROUP BY p.power_name\n) subquery\nORDER BY sort_order, __text;",
+              "rawQuery": true,
+              "rawSql": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT DISTINCT\n        COALESCE(p.power_name, p.power_id) as __value,\n        COALESCE(p.power_name, CONCAT('⚠️ ', p.power_id)) as __text,\n        CONCAT('Uses: ', COUNT(*)) as __description,\n        CASE WHEN p.power_name IS NULL THEN 2 ELSE 1 END as sort_order\n    FROM combat_logs l\n    JOIN powers p ON l.power_id = p.id\n    LEFT JOIN entities e_source ON l.source_id = e_source.id\n    LEFT JOIN entities e_victim ON l.victim_id = e_victim.id\n    WHERE \n        $__timeFilter(l.log_timestamp)\n        -- фильтр по выбранным source_player\n        AND (('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\n            OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\n            OR e_source.entity_name IN (${source_player:sqlstring})\n        )\n        -- фильтр по выбранным victim_player\n        AND (('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\n            OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\n            OR (NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\n            AND e_victim.entity_name IN (${victim_player:sqlstring})\n        )\n        )\n        -- фильтр по impact_type\n        AND (\n            'all' IN (${impact_type:sqlstring})\n            OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\n            OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\n        )\n        AND p.attack_type != 'Power'\n    GROUP BY p.power_name\n) subquery\nORDER BY sort_order, __text;",
+              "refId": "SQLVariableQueryEditor-VariableQuery",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
           },
-          "refresh": "onTimeRangeChanged",
           "regex": "",
-          "skipUrlSync": false,
-          "sort": "disabled"
+          "regexApplyTo": "value",
+          "sort": "disabled",
+          "definition": "SELECT \n    __value,\n    __text,\n    __description\nFROM (\n    SELECT DISTINCT\n        COALESCE(p.power_name, p.power_id) as __value,\n        COALESCE(p.power_name, CONCAT('⚠️ ', p.power_id)) as __text,\n        CONCAT('Uses: ', COUNT(*)) as __description,\n        CASE WHEN p.power_name IS NULL THEN 2 ELSE 1 END as sort_order\n    FROM combat_logs l\n    JOIN powers p ON l.power_id = p.id\n    LEFT JOIN entities e_source ON l.source_id = e_source.id\n    LEFT JOIN entities e_victim ON l.victim_id = e_victim.id\n    WHERE \n        $__timeFilter(l.log_timestamp)\n        -- фильтр по выбранным source_player\n        AND (('ALL_PLAYERS' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Player')\n            OR ('ALL_ENEMIES' IN (${source_player:sqlstring}) AND e_source.entity_type = 'Creature')\n            OR e_source.entity_name IN (${source_player:sqlstring})\n        )\n        -- фильтр по выбранным victim_player\n        AND (('ALL_PLAYERS' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Player')\n            OR ('ALL_ENEMIES' IN (${victim_player:sqlstring}) AND e_victim.entity_type = 'Creature')\n            OR (NOT 'ALL_PLAYERS' IN (${victim_player:sqlstring})\n            AND NOT 'ALL_ENEMIES' IN (${victim_player:sqlstring})\n            AND e_victim.entity_name IN (${victim_player:sqlstring})\n        )\n        )\n        -- фильтр по impact_type\n        AND (\n            'all' IN (${impact_type:sqlstring})\n            OR ('damage' IN (${impact_type:sqlstring}) AND l.actual_impact > 0)\n            OR ('heal' IN (${impact_type:sqlstring}) AND l.actual_impact < 0)\n        )\n        AND p.attack_type != 'Power'\n    GROUP BY p.power_name\n) subquery\nORDER BY sort_order, __text;",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": false
         }
       }
     ]
-  },
-  "status": {}
+  }
 }
