@@ -34,7 +34,7 @@ Headless Java application for forwarding Champions Online combat logs to MySQL d
 | 🎮 **Champions Online** | any | ✅ Yes | Game with combat logging enabled |
 
 ## 🚀 Quick Start
-Coming soon in v1.2
+Coming soon in v1.1
 
 ## 🛠️ Manual installation Guide
 
@@ -91,3 +91,29 @@ java -jar target/cocla-*.jar
 ```bash
 /CombatLog 0
 ```
+
+## 📦 Third-Party Components
+
+COCLA portable distribution includes the following third-party software.
+All components are included as-is without modification.
+
+| Component | Version | License | Source |
+|-----------|---------|---------|--------|
+| **OpenJDK** | 27+19 | GPLv2 with Classpath Exception | [https://github.com/openjdk/jdk](https://github.com/openjdk/jdk) |
+| **MariaDB** | 12.2.2 | GPLv2 | [https://github.com/MariaDB/server](https://github.com/MariaDB/server) |
+| **Grafana** | 13.0.1 | AGPLv3 | [https://github.com/grafana/grafana](https://github.com/grafana/grafana) |
+| **HikariCP** | 7.0.2 | Apache 2.0 | [https://github.com/brettwooldridge/HikariCP](https://github.com/brettwooldridge/HikariCP) |
+| **MySQL Connector/J** | 8.0.33 | GPLv2 with FOSS Exception | [https://github.com/mysql/mysql-connector-j](https://github.com/mysql/mysql-connector-j) |
+
+### License Notes
+
+1. **OpenJDK** — Free and open-source. No restrictions on redistribution.
+2. **MariaDB** — GPLv2. Including unmodified binaries in a larger distribution is permitted under GPL.
+3. **Grafana** — AGPLv3. Source code must be made available to users. Link to repository provided above.
+4. **HikariCP** — Apache 2.0. Permits inclusion in both open-source and proprietary software.
+5. **MySQL Connector/J** — GPLv2 with FOSS Exception. Allows use with open-source applications without GPL infecting your code.
+
+### Source Availability
+
+All third-party source code is available at the URLs listed above.
+COCLA itself is licensed under the MIT License.
