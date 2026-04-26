@@ -65,7 +65,7 @@ CREATE TABLE `impact_types` (
   KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Основная таблица логов
+-- 4. Основная таблица логов (с оптимизированными индексами)
 CREATE TABLE `combat_logs` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `log_timestamp` datetime NOT NULL,
@@ -80,16 +80,24 @@ CREATE TABLE `combat_logs` (
   `file_name` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `line_hash` (`line_hash`),
+  -- Одиночные индексы для JOIN'ов
   KEY `idx_timestamp` (`log_timestamp`),
   KEY `idx_source` (`source_id`),
   KEY `idx_victim` (`victim_id`),
   KEY `idx_power` (`power_id`),
   KEY `idx_summoner` (`summoner_id`),
-  KEY `idx_timestamp_source` (`log_timestamp`,`source_id`),
-  KEY `idx_timestamp_victim` (`log_timestamp`,`victim_id`),
   KEY `idx_line_hash` (`line_hash`),
-  KEY `idx_time_source` (`log_timestamp`,`source_id`,`actual_impact`),
-  KEY `idx_time_victim` (`log_timestamp`,`victim_id`,`actual_impact`),
+  -- Составные индексы для фильтрации по времени + группировке
+  KEY `idx_timestamp_source` (`log_timestamp`, `source_id`),
+  KEY `idx_timestamp_victim` (`log_timestamp`, `victim_id`),
+  KEY `idx_timestamp_power` (`log_timestamp`, `power_id`),
+  -- Составные индексы для быстрого поиска по ID сущностей
+  KEY `idx_source_timestamp` (`source_id`, `log_timestamp`),
+  KEY `idx_victim_timestamp` (`victim_id`, `log_timestamp`),
+  -- Составные индексы для агрегации actual_impact
+  KEY `idx_time_source_impact` (`log_timestamp`, `source_id`, `actual_impact`),
+  KEY `idx_time_victim_impact` (`log_timestamp`, `victim_id`, `actual_impact`),
+  -- Внешние ключи
   CONSTRAINT `fk_combat_source` FOREIGN KEY (`source_id`) REFERENCES `entities` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_combat_summoner` FOREIGN KEY (`summoner_id`) REFERENCES `entities` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_combat_victim` FOREIGN KEY (`victim_id`) REFERENCES `entities` (`id`) ON DELETE SET NULL,
