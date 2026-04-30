@@ -39,6 +39,7 @@ target/
 build/
 dist/
 redist/
+installer/output/
 
 # Maven
 dependency-reduced-pom.xml

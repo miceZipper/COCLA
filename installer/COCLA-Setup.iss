@@ -2,7 +2,7 @@
 ; Supports Typical and Custom installation
 
 #define AppName "COCLA"
-#define AppVersion "1.2"
+#define AppVersion "1.0"
 #define AppPublisher "miceZipper"
 #define AppURL "https://github.com/miceZipper/COCLA"
 #define DefaultMariaDBPort "3306"
@@ -41,18 +41,18 @@ Name: "cocla"; Description: "COCLA Core Application"; Types: typical custom; Fla
 
 [Files]
 ; COCLA
-Source: "cocla.jar"; DestDir: "{app}"; Flags: ignoreversion; Components: cocla
-Source: "config\cocla\schema.sql"; DestDir: "{app}\config\cocla"; Flags: ignoreversion; Components: mariadb cocla
+Source: "..\target\cocla-{#AppVersion}.jar"; DestDir: "{app}"; DestName: "cocla.jar"; Flags: ignoreversion; Components: cocla
+Source: "..\config\mariadb\schema.sql"; DestDir: "{app}\config\cocla"; Flags: ignoreversion; Components: mariadb cocla
 
 ; Grafana provisioning
-Source: "config\grafana\provisioning\datasources\mysql-cocla.yml"; DestDir: "{app}\config\grafana\provisioning\datasources"; Flags: ignoreversion; Components: grafana
-Source: "config\grafana\provisioning\dashboards\cocla.yml"; DestDir: "{app}\config\grafana\provisioning\dashboards"; Flags: ignoreversion; Components: grafana
-Source: "config\grafana\provisioning\dashboards\cocla\cocla-dashboard.json"; DestDir: "{app}\config\grafana\provisioning\dashboards\cocla"; Flags: ignoreversion; Components: grafana
+Source: "..\config\grafana\provisioning\datasources\mysql-cocla.yml"; DestDir: "{app}\config\grafana\provisioning\datasources"; Flags: ignoreversion; Components: grafana
+Source: "..\config\grafana\provisioning\dashboards\cocla.yml"; DestDir: "{app}\config\grafana\provisioning\dashboards"; Flags: ignoreversion; Components: grafana
+Source: "..\config\grafana\provisioning\dashboards\cocla\cocla-dashboard.json"; DestDir: "{app}\config\grafana\provisioning\dashboards\cocla"; Flags: ignoreversion; Components: grafana
 
 ; Redistributables
-Source: "redist\win64\openjdk-26_windows-x64_bin.zip"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: java
-Source: "redist\win64\mariadb-12.2.2-winx64.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: mariadb
-Source: "redist\win64\grafana_13.0.1_24542347077_windows_amd64.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: grafana
+Source: "..\redist\win64\openjdk-26_windows-x64_bin.zip"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: java
+Source: "..\redist\win64\mariadb-12.2.2-winx64.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: mariadb
+Source: "..\redist\win64\grafana_13.0.1_24542347077_windows_amd64.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: grafana
 
 [Icons]
 Name: "{group}\Start COCLA"; Filename: "{app}\start.bat"; WorkingDir: "{app}"
@@ -63,11 +63,12 @@ Name: "{group}\Uninstall COCLA"; Filename: "{uninstallexe}"
 [Code]
 var
   CustomPage: TInputQueryWizardPage;
+  CustomPageCreated: Boolean;
   MariaDBPort, GrafanaPort: String;
   MariaDBPassword, GrafanaPassword, GrafanaDBPassword, CoclaDBPassword: String;
-  MariaDBDataDir, GrafanaHomeDir: String;
   InstallMariaDB, InstallGrafana, InstallJava: Boolean;
   GameLogDir: String;
+  IsTypical: Boolean;
 
 // Получить порт Grafana для иконки
 function GetGrafanaPort(Param: String): String;
@@ -101,6 +102,34 @@ begin
   GrafanaDBPassword := 'grafana';
   CoclaDBPassword := 'cocla';
   GameLogDir := 'C:\Program Files (x86)\Steam\steamapps\common\Champions Online\Champions Online\Live\logs\Client';
+  CustomPage := nil;
+  CustomPageCreated := False;
+end;
+
+// Блокировка изменения компонентов при Typical
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpSelectComponents then
+  begin
+    // Определяем тип установки
+    IsTypical := WizardIsComponentSelected('typical');
+    
+    if IsTypical then
+    begin
+      // Выбрать все компоненты
+      WizardForm.ComponentsList.Checked[0] := True; // java
+      WizardForm.ComponentsList.Checked[1] := True; // mariadb
+      WizardForm.ComponentsList.Checked[2] := True; // grafana
+      WizardForm.ComponentsList.Checked[3] := True; // cocla
+      
+      // Заблокировать изменение
+      WizardForm.ComponentsList.Enabled := False;
+    end
+    else
+    begin
+      WizardForm.ComponentsList.Enabled := True;
+    end;
+  end;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -109,87 +138,47 @@ begin
   
   if CurPageID = wpSelectComponents then
   begin
-    InstallJava := IsComponentSelected('java');
-    InstallMariaDB := IsComponentSelected('mariadb');
-    InstallGrafana := IsComponentSelected('grafana');
+    IsTypical := WizardIsComponentSelected('typical');
+    InstallJava := WizardIsComponentSelected('java');
+    InstallMariaDB := WizardIsComponentSelected('mariadb');
+    InstallGrafana := WizardIsComponentSelected('grafana');
     
-    // Если custom, показываем страницу настроек
-    if WizardIsComponentSelected('custom') then
+    // Создаём страницу ТОЛЬКО если ещё не создана
+    if (not IsTypical) and (not CustomPageCreated) then
     begin
       CustomPage := CreateInputQueryPage(wpSelectComponents,
-        'Custom Configuration', 'Configure COCLA components',
-        'Please specify the configuration parameters.You can leave defaults if unsure.');
-      
-      if InstallMariaDB then
-      begin
-        CustomPage.Add('MariaDB Port:', False);
-        CustomPage.Add('MariaDB Root Password:', False);
-        CustomPage.Add('MariaDB Data Directory:', False);
-      end;
-      
-      if InstallGrafana then
-      begin
-        CustomPage.Add('Grafana Port:', False);
-        CustomPage.Add('Grafana Admin Password:', False);
-      end;
-      
+        'Details', 'Configure COCLA components',
+        'Specify addresses, ports and passwords. Leave defaults if unsure.');
+
+      CustomPage.Add('MariaDB address:port:', False);
+      CustomPage.Add('Grafana address:port:', False);
+      CustomPage.Add('Grafana Admin Password:', False);
       CustomPage.Add('Game Log Directory:', False);
       
-      // Заполняем дефолтные значения
-      if InstallMariaDB then
-      begin
-        CustomPage.Values[0] := MariaDBPort;
-        CustomPage.Values[1] := MariaDBPassword;
-        CustomPage.Values[2] := ExpandConstant('{app}\mariadb\data');
-      end;
+      CustomPage.Values[0] := '127.0.0.1:' + MariaDBPort;
+      CustomPage.Values[1] := '127.0.0.1:' + GrafanaPort;
+      CustomPage.Values[2] := GrafanaPassword;
+      CustomPage.Values[3] := GameLogDir;
       
-      if InstallGrafana then
-      begin
-        CustomPage.Values[3] := GrafanaPort;
-        CustomPage.Values[4] := GrafanaPassword;
-      end;
-      
-      CustomPage.Values[5] := GameLogDir;
+      CustomPageCreated := True;
     end;
-  end;
+  end
   
-  // После custom page, валидируем
-  if (CurPageID = CustomPage.ID) and WizardIsComponentSelected('custom') then
+  else if (CustomPage <> nil) and (CurPageID = CustomPage.ID) then
   begin
-    if InstallMariaDB then
-    begin
-      MariaDBPort := CustomPage.Values[0];
-      MariaDBPassword := CustomPage.Values[1];
-      MariaDBDataDir := CustomPage.Values[2];
-    end;
+    // Читаем значения КАЖДЫЙ раз при проходе через страницу
+    MariaDBPort := CustomPage.Values[0];
+    GrafanaPort := CustomPage.Values[1];
+    GrafanaPassword := CustomPage.Values[2];
+    GameLogDir := CustomPage.Values[3];
     
-    if InstallGrafana then
-    begin
-      GrafanaPort := CustomPage.Values[3];
-      GrafanaPassword := CustomPage.Values[4];
-    end;
-    
-    GameLogDir := CustomPage.Values[5];
-    
-    // Проверка существования папки логов
     if not DirExists(GameLogDir) then
     begin
-      if WizardIsComponentSelected('typical') then
-      begin
-        if BrowseForFolder('Game log directory not found! Please locate it:', GameLogDir, False) then
-        begin
-          // ок
-        end
-        else
-        begin
-          MsgBox('Game log directory must be specified for COCLA to work.', mbError, MB_OK);
-          Result := False;
-        end;
-      end
+      if BrowseForFolder('Game log directory not found! Locate Champions Online logs:', GameLogDir, False) then
+        CustomPage.Values[3] := GameLogDir
       else
       begin
-        MsgBox('Game log directory does not exist: ' + GameLogDir + #13#10 +
-               'Please create it first or specify an existing directory.', mbError, MB_OK);
+        MsgBox('Game log directory is required for COCLA to work.', mbError, MB_OK);
         Result := False;
       end;
     end;
@@ -200,27 +189,42 @@ end;
 function InstallMariaDBSilent: Boolean;
 var
   ResultCode: Integer;
-  MSIPath, DataDir, InstallDir: String;
+  MSIPath, InstallDir, DataDir: String;
 begin
   Result := False;
   MSIPath := ExpandConstant('{tmp}\mariadb-12.2.2-winx64.msi');
   InstallDir := ExpandConstant('{app}\mariadb');
   DataDir := ExpandConstant('{app}\mariadb\data');
   
-  // Тихая установка БЕЗ службы
-  if Exec('msiexec', '/i "' + MSIPath + '" /quiet /norestart ' +
-     'INSTALLDIR="' + InstallDir + '" ' +
-     'DATADIR="' + DataDir + '" ' +
-     'SERVICENAME="" ' +                    // Не устанавливать службу!
-     'PORT=' + MariaDBPort + ' ' +
-     'PASSWORD="' + MariaDBPassword + '" ' +
-     'ALLOWEMPTYPASSWORD=0 ' +
-     'SKIPPERMISSIONSFIX=1',
-     '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  if not FileExists(MSIPath) then
   begin
-    Sleep(3000);
-    Result := (ResultCode = 0) or (ResultCode = 1641); // 1641 = reboot initiated (но не нужно)
+    Log('ERROR: MariaDB MSI not found at ' + MSIPath);
+    Exit;
   end;
+  
+  if Exec('msiexec', '/i "' + MSIPath + '" /qb ' +
+   'INSTALLDIR="' + InstallDir + '" ' +
+   'DATADIR="' + DataDir + '" ' +
+   'SERVICENAME="" ' +                    // Пустое имя = без службы
+   'PORT=' + MariaDBPort + ' ' +
+   'PASSWORD="' + MariaDBPassword + '" ' +
+   'CLEANUPDATA=0 ' +                     // Не чистить данные
+   'EnableNetworking=1',
+   '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Log('MariaDB MSI result code: ' + IntToStr(ResultCode));
+    Sleep(5000); // Ждём завершения установки
+    
+    if FileExists(InstallDir + '\bin\mysql.exe') then
+    begin
+      Log('MariaDB installed successfully');
+      Result := True;
+    end
+    else
+      Log('ERROR: MariaDB installed but mysql.exe not found');
+  end
+  else
+    Log('ERROR: Failed to execute MariaDB MSI');
 end;
 
 // Установка Grafana (тихо, без службы)
@@ -244,42 +248,6 @@ begin
   end;
 end;
 
-// Извлечение OpenJDK
-function ExtractOpenJDK: Boolean;
-var
-  ZipFile, ExtractPath: String;
-  FindRec: TFindRec;
-  JavaHome: String;
-begin
-  Result := False;
-  ZipFile := ExpandConstant('{tmp}\openjdk-26_windows-x64_bin.zip');
-  ExtractPath := ExpandConstant('{app}\java');
-  
-  if Unzip(ZipFile, ExtractPath) then
-  begin
-    // Найти папку с JDK внутри
-    if FindFirst(ExtractPath + '\*', FindRec) then
-    begin
-      repeat
-        if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
-        begin
-          if Pos('jdk', LowerCase(FindRec.Name)) > 0 then
-          begin
-            JavaHome := ExtractPath + '\' + FindRec.Name;
-            Result := True;
-            Break;
-          end;
-        end;
-      until not FindNext(FindRec);
-      FindClose(FindRec);
-    end;
-  end;
-  
-  if Result then
-    Log('OpenJDK extracted to: ' + JavaHome)
-  else
-    Log('ERROR: Failed to extract OpenJDK');
-end;
 
 // Unzip helper
 function Unzip(ZipFile, DestDir: String): Boolean;
@@ -302,6 +270,36 @@ begin
   end;
 end;
 
+// Извлечение OpenJDK
+function ExtractOpenJDK: Boolean;
+var
+  ZipFile, ExtractPath: String;
+  PowershellCmd: String;
+  ResultCode: Integer;
+begin
+  Result := False;
+  ZipFile := ExpandConstant('{tmp}\openjdk-26_windows-x64_bin.zip');
+  ExtractPath := ExpandConstant('{app}\java');
+  
+  if not DirExists(ExtractPath) then
+    CreateDir(ExtractPath);
+  
+  PowershellCmd := 'Expand-Archive -Path "' + ZipFile + '" -DestinationPath "' + ExtractPath + '" -Force';
+  
+  if Exec('powershell.exe', '-NoProfile -Command "' + PowershellCmd + '"',
+          '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := (ResultCode = 0);
+    if Result then
+      Log('OpenJDK extracted successfully')
+    else
+      Log('ERROR: PowerShell extraction failed with code ' + IntToStr(ResultCode));
+  end
+  else
+    Log('ERROR: Failed to launch PowerShell');
+end;
+
+
 // Выполнить schema.sql
 procedure ExecuteSchemaSQL;
 var
@@ -311,29 +309,40 @@ begin
   SQLPath := ExpandConstant('{app}\config\cocla\schema.sql');
   MysqlExe := ExpandConstant('{app}\mariadb\bin\mysql.exe');
   
-  if FileExists(SQLPath) and FileExists(MysqlExe) then
+  if not FileExists(SQLPath) then
   begin
-    Exec(MysqlExe, '-u root -p' + MariaDBPassword + ' -P ' + MariaDBPort + ' < "' + SQLPath + '"',
-         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Log('ERROR: schema.sql not found at ' + SQLPath);
+    Exit;
+  end;
+  
+  if not FileExists(MysqlExe) then
+  begin
+    Log('ERROR: mysql.exe not found at ' + MysqlExe);
+    Exit;
+  end;
+  
+  if Exec(MysqlExe, '-u root -p' + MariaDBPassword + ' -P ' + MariaDBPort + ' < "' + SQLPath + '"',
+         '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
     if ResultCode = 0 then
       Log('Schema.sql executed successfully')
     else
-      Log('WARNING: schema.sql execution returned code: ' + IntToStr(ResultCode));
+      Log('WARNING: schema.sql returned code: ' + IntToStr(ResultCode));
   end
   else
-    Log('ERROR: schema.sql or mysql.exe not found');
+    Log('ERROR: Failed to execute mysql');
 end;
 
 // Настройка Grafana provisioning
 procedure ConfigureGrafanaProvisioning;
 var
-  IniFile, ProvisioningDir, SourceFile, DestFile: String;
+  IniFile, SourceFile, DestFile: String;
 begin
   // Копируем custom.ini
   SourceFile := ExpandConstant('{app}\grafana\conf\sample.ini');
   DestFile := ExpandConstant('{app}\grafana\conf\custom.ini');
   if FileExists(SourceFile) and not FileExists(DestFile) then
-    FileCopy(SourceFile, DestFile, False);
+    CopyFile(SourceFile, DestFile, False);
   
   IniFile := ExpandConstant('{app}\grafana\conf\custom.ini');
   
@@ -481,32 +490,31 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
+begin
+  // 1. Сначала Java
+  if InstallJava then
+    ExtractOpenJDK;
+  
+  // 2. Потом MariaDB
+  if InstallMariaDB then
   begin
-    // Установка Java
-    if InstallJava then
-      ExtractOpenJDK;
-    
-    // Установка MariaDB
-    if InstallMariaDB then
-    begin
-      InstallMariaDBSilent;
-      ExecuteSchemaSQL;
-    end;
-    
-    // Установка Grafana
-    if InstallGrafana then
-    begin
-      InstallGrafanaSilent;
-      ConfigureGrafanaProvisioning;
-    end;
-    
-    // Создать конфиги и скрипты
-    CreateCOCLAConfig;
-    CreateStartBat;
-    CreateStopBat;
-    
-    Log('Installation completed successfully');
+    InstallMariaDBSilent;
+    // Запускаем MariaDB временно для schema.sql
+    // Потом schema.sql
   end;
+  
+  // 3. Потом Grafana
+  if InstallGrafana then
+  begin
+    InstallGrafanaSilent;
+    ConfigureGrafanaProvisioning;
+  end;
+  
+  // 4. Конфиги и скрипты
+  CreateCOCLAConfig;
+  CreateStartBat;
+  CreateStopBat;
+end;
 end;
 
 // Добавление JAVA_HOME в PATH
