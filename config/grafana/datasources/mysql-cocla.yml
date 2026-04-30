@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: mysql-cocla
+    type: mysql
+    access: proxy
+    url: 127.0.0.1:3306
+    database: cocla
+    user: cocla
+    secureJsonData:
+      password: cocla
+    jsonData:
+      timezone: UTC
+    editable: true

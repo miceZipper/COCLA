@@ -38,6 +38,7 @@ nb-configuration.xml
 target/
 build/
 dist/
+redist/
 
 # Maven
 dependency-reduced-pom.xml
@@ -64,3 +65,4 @@ desktop.ini
 # Backup files
 *.bak
 *.backup
+
